@@ -65,7 +65,7 @@
     /* digito seguido de ponto seguido de pelo menos mais um digito, 
     *  podendo ter um E ou e, e depois pode ter um + ou -, 
     *  e se tiver o e entao também deve terminar com um número. 
-    *  Nesse contexto, '?' e '{0,1}' são a mesma coisa, quer dizer opcional 
+    *  Nesse contexto, '?' e '{0,1}' sao a mesma coisa, quer dizer opcional 
     * https://www.cs.virginia.edu/~cr4bd/flex-manual/Patterns.html*/
 [0-9]+\.[0-9]+([Ee](\+|\-)?[0-9]+){0,1}   { return TK_LIT_FLOAT; }
 [0-9]+                                    { return TK_LIT_INT; }
@@ -75,15 +75,15 @@
 \"(\\.|[^"\n])*\"                  { return TK_LIT_STRING; }
 
 
-    /* comentarios */
-"//".*                            {}
-    /* não da pra usar .* pq o . não considera quebra de linha :/ então basicamente
-    *  fiz um match em qualquer char que não seja * (arbitrario), depois aceita esse char 
-    *  depois de novo qualquer char que não seja pra poder terminar, e depois o fechando */
-"/*"[^*]*[*]*[^*]*"*/"                     {}
+    /* comentarios: 
+    /* nao da pra usar .* pq o . nao considera quebra de linha :/ entao basicamente
+    *  fiz um match em qualquer char que nao seja * (arbitrario), depois aceita esse char 
+    *  depois de novo qualquer char que nao seja pra poder terminar, e depois o fechando */
+"/*"[^*]*[*]*[^*]*"*/"    {}
+"//".*                    {}
 
 
-    /* erro se nao se adequa a nenhum padrao ou se o comentario de multiplas linhas não fecha */
+    /* erro se nao se adequa a nenhum padrao ou se o comentario de multiplas linhas nao fecha */
 "/*"    return TOKEN_ERRO;
 .       return TOKEN_ERRO;
 
