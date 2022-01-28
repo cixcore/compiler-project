@@ -1,0 +1,14 @@
+abcs
+if then else
+default, ; >=
+class123 4.78 teste_12
+0.98
+output x
+0.123E-0
+// if
+indent
+/* if
+then
+else*
+thr*/
+xis09___
