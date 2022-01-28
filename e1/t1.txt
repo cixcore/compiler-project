@@ -11,4 +11,8 @@ indent
 then
 else*
 thr*/
+/* 
+comm
+*/
 xis09___
+'c' 'char' '\'' "stringa" '\n'

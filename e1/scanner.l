@@ -70,16 +70,13 @@
 [0-9]+\.[0-9]+([Ee](\+|\-)?[0-9]+){0,1}   { return TK_LIT_FLOAT; }
 [0-9]+                                    { return TK_LIT_INT; }
 
-    /* char dentro de '' ou cadeia de chars dentro de "" */
+    /* char dentro de '' (aceitando coisas tipo '\'') ou cadeia de chars dentro de "" */
 '(\\.|[^'\n\t])'                   { return TK_LIT_CHAR; }
 \"(\\.|[^"\n])*\"                  { return TK_LIT_STRING; }
 
 
-    /* comentarios: 
-    /* nao da pra usar .* pq o . nao considera quebra de linha :/ entao basicamente
-    *  fiz um match em qualquer char que nao seja * (arbitrario), depois aceita esse char 
-    *  depois de novo qualquer char que nao seja pra poder terminar, e depois o fechando */
-"/*"[^*]*[*]*[^*]*"*/"    {}
+    /* comentarios */
+"/*"(\n|.)*"*/"           {}
 "//".*                    {}
 
 
