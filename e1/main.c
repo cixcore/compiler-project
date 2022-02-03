@@ -18,8 +18,9 @@ extern int get_line_number (void);
 
 int main (int argc, char **argv)
 {
+    int erro = 0;
     int token = 0;
-    while (token = yylex()) {
+    while ((token = yylex())) {
         switch (token){
             case ',':
             case ';':
@@ -87,10 +88,10 @@ int main (int argc, char **argv)
             case TK_LIT_CHAR: print_nome (TK_LIT_CHAR); break;
             case TK_LIT_STRING: print_nome (TK_LIT_STRING); break;
             case TK_IDENTIFICADOR: print_nome (TK_IDENTIFICADOR); break;
-            case TOKEN_ERRO:  print_nome (TOKEN_ERRO); break;
+            case TOKEN_ERRO:  print_nome (TOKEN_ERRO); erro = 1; break;
             default: printf ("<Invalid Token with code %d>\n", token); return 1; break;
         }
     }
     yylex_destroy();
-    return 0;
+    return erro;
 }

@@ -15,4 +15,4 @@ thr*/
 comm
 */
 xis09___
-'c' 'char' '\'' "stringa" '\n'
+'c' 'char' '\'' "stringa" '\n' "srtzn \r"
