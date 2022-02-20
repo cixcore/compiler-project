@@ -5,4 +5,4 @@ etapa2:
 	gcc -o etapa2 main.c lex.yy.o parser.tab.o -lfl
 
 clean:
-	rm lex.yy.c parser.tab.c parser.tab.h etapa2
+	rm lex.yy.c parser.tab.c parser.tab.h etapa2 parser.output *.o

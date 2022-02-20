@@ -1,0 +1,6 @@
+char fun3(+2) {
+    int a;
+    while(b == a) {
+        int mamaki;
+    }
+}

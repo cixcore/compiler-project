@@ -1,0 +1,19 @@
+char foo() {
+    for(i = 0: i< 10: i = i+1) {
+        output "te amo infinitooooooooo";
+    };
+
+    if(euteamomuito == true) {
+        input tuehoamordaminhavida;
+    } else {
+        output errorIssoehImpossivel;
+    };
+
+    if(true) {
+        if( a == ture ? true : false) {
+            while(true) do {
+                int i <= 2^3;
+            };
+        };
+    };
+}
