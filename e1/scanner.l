@@ -35,7 +35,7 @@
 "end"           return TK_PR_END; 
 "default"       return TK_PR_DEFAULT; 
 
-[\,\;\:\(\)\[\]\{\}\+\-\*\/\<\>\=\!\&\%\#\^\.\$]      return yytext[0];
+[\,\;\:\(\)\[\]\{\}\+\-\*\/\<\>\=\!\&\%\#\^\.\$\?\|]      return yytext[0];
 
 "<="    return TK_OC_LE;
 ">="    return TK_OC_GE;
@@ -57,8 +57,8 @@
     *  e se tiver o e entao também deve terminar com um número. 
     *  Nesse contexto, '?' e '{0,1}' sao a mesma coisa, quer dizer opcional 
     * https://www.cs.virginia.edu/~cr4bd/flex-manual/Patterns.html*/
-[0-9]+\.[0-9]+([Ee](\+|\-)?[0-9]+){0,1}     return TK_LIT_FLOAT; 
-[0-9]+                                      return TK_LIT_INT; 
+[+-]?[0-9]+\.[0-9]+([Ee](\+|\-)?[0-9]+){0,1}     return TK_LIT_FLOAT; 
+[+-]?[0-9]+                                      return TK_LIT_INT; 
 
     /* char dentro de '' (aceitando coisas tipo '\'') ou cadeia de chars dentro de "" */
 '("\\".|[^'\n\t])'        return TK_LIT_CHAR;

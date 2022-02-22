@@ -1,3 +1,4 @@
+/* Grupo H - Carlos Morvan Santiago, Maria Cecília Corrêa */
 %{
     #include <stdio.h>
     extern int get_line_number();
@@ -5,7 +6,6 @@
     void yyerror (char const *s);
 %}
 
-%define parse.lac full
 %define parse.error verbose
 
 %token TK_PR_INT

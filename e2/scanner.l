@@ -1,3 +1,4 @@
+/* Grupo H - Carlos Morvan Santiago, Maria Cecília Corrêa */
 %{  
     #include "parser.tab.h"
     int get_line_number();
