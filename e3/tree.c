@@ -1,3 +1,4 @@
+/* Grupo H - Carlos Morvan Santiago, Maria Cecília Corrêa */
 #include <stdlib.h>
 #include <string.h> 
 #include <stdio.h>
