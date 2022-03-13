@@ -106,13 +106,13 @@ eq_neq_or_compare: eq_neq_or_compare TK_OC_EQ compare_or_sum | eq_neq_or_compare
 compare_or_sum: compare_or_sum TK_OC_LE sum_sub_or_mult_div_or_pow | compare_or_sum TK_OC_GE sum_sub_or_mult_div_or_pow | compare_or_sum '<' sum_sub_or_mult_div_or_pow | compare_or_sum '>' sum_sub_or_mult_div_or_pow | sum_sub_or_mult_div_or_pow;  
 sum_sub_or_mult_div_or_pow: sum_sub_or_mult_div_or_pow '+' mult_div_or_pow | sum_sub_or_mult_div_or_pow '-' mult_div_or_pow | mult_div_or_pow;
 mult_div_or_pow: mult_div_or_pow '*' pow_or_op | mult_div_or_pow '/' pow_or_op | mult_div_or_pow '%' pow_or_op | pow_or_op;  
-pow_or_op: pow_or_op '^' op | op; 
+pow_or_op: pow_or_op '^' unary_expr | unary_expr; 
 
-op: opt_op_unary operand;
-operand: unsigned_literal | TK_IDENTIFICADOR optional_vec | func_call | '(' expr ')';
-unsigned_literal: TK_LIT_INT | TK_LIT_FLOAT | TK_LIT_FALSE | TK_LIT_TRUE | TK_LIT_CHAR | TK_LIT_STRING;
+unary_expr: opt_unary_operator unary_expr | operand;
+operand: unsigned_literal | TK_IDENTIFICADOR optional_vec | func_call | '('expr')';
+unsigned_literal: TK_LIT_INT | TK_LIT_FLOAT;
 
-opt_op_unary: '+' | '-' | '!' | '&' | '*' | '?' | '#' | %empty;
+opt_unary_operator: '+' | '-' | '!' | '&' | '*' | '?' | '#';
 
 
 %%

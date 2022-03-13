@@ -8,6 +8,7 @@
 %}
 
 %define parse.error verbose
+%define parse.trace
 
 %union{
 	struct lex_value_t* valor_lexico;
@@ -74,7 +75,7 @@ parameters_list: parameter ',' parameters_list | parameter;
 parameter: const type TK_IDENTIFICADOR;
 const: TK_PR_CONST | %empty;
 command_block: command ';' command_block | %empty;
-command: dec_var_local | attr | input | output | func_call | shift | return | TK_PR_BREAK | TK_PR_CONTINUE | if_then_else_opt | for_block | while_block;
+command: '{'command_block'}' | dec_var_local | attr | input | output | func_call | shift | return | TK_PR_BREAK | TK_PR_CONTINUE | if_then_else_opt | for_block | while_block;
 
 dec_var_local: static const type var_local_list;
 var_local_list: var_local ',' var_local_list | var_local;
@@ -112,13 +113,13 @@ eq_neq_or_compare: eq_neq_or_compare TK_OC_EQ compare_or_sum | eq_neq_or_compare
 compare_or_sum: compare_or_sum TK_OC_LE sum_sub_or_mult_div_or_pow | compare_or_sum TK_OC_GE sum_sub_or_mult_div_or_pow | compare_or_sum '<' sum_sub_or_mult_div_or_pow | compare_or_sum '>' sum_sub_or_mult_div_or_pow | sum_sub_or_mult_div_or_pow;  
 sum_sub_or_mult_div_or_pow: sum_sub_or_mult_div_or_pow '+' mult_div_or_pow | sum_sub_or_mult_div_or_pow '-' mult_div_or_pow | mult_div_or_pow;
 mult_div_or_pow: mult_div_or_pow '*' pow_or_op | mult_div_or_pow '/' pow_or_op | mult_div_or_pow '%' pow_or_op | pow_or_op;  
-pow_or_op: pow_or_op '^' op | op; 
+pow_or_op: pow_or_op '^' unary_expr | unary_expr; 
 
-op: opt_op_unary operand;
-operand: unsigned_literal | TK_IDENTIFICADOR optional_vec | func_call | '(' expr ')';
-unsigned_literal: TK_LIT_INT | TK_LIT_FLOAT | TK_LIT_FALSE | TK_LIT_TRUE | TK_LIT_CHAR | TK_LIT_STRING;
+unary_expr: opt_unary_operator unary_expr | operand;
+operand: unsigned_literal | TK_IDENTIFICADOR optional_vec | func_call | '('expr')';
+unsigned_literal: TK_LIT_INT | TK_LIT_FLOAT;
 
-opt_op_unary: '+' | '-' | '!' | '&' | '*' | '?' | '#' | %empty;
+opt_unary_operator: '+' | '-' | '!' | '&' | '*' | '?' | '#';
 
 
 %%
