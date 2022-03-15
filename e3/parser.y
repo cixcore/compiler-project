@@ -126,10 +126,10 @@ var_local:
 literal: 
     '-' TK_LIT_INT                  { $$ = createNLeaf($2); }
     | '+' TK_LIT_INT                { $$ = createLeaf($2); }
-    |  TK_LIT_INT                   { $$ = createLeaf($2); }
+    |  TK_LIT_INT                   { $$ = createLeaf($1); }
     | '+' TK_LIT_FLOAT              { $$ = createLeaf($2); }
     | '-' TK_LIT_FLOAT              { $$ = createNLeaf($2); }
-    | TK_LIT_FLOAT                  { $$ = createLeaf($2); }
+    | TK_LIT_FLOAT                  { $$ = createLeaf($1); }
     | TK_LIT_FALSE                  { $$ = createLeaf($1); }
     | TK_LIT_TRUE                   { $$ = createLeaf($1); }
     | TK_LIT_CHAR                   { $$ = createLeaf($1); }
@@ -184,12 +184,12 @@ bit_and_or_eq:
     bit_and_or_eq '&' eq_neq_or_compare             { $$ = createParentNode2Children(lexToNode(lexValueFromSC('&')), $1, $3); }
     | eq_neq_or_compare                             { $$ = $1; };  
 eq_neq_or_compare: 
-    eq_neq_or_compare TK_OC_EQ compare_or_sum       { $$ = createParentNode2Children($2, $1, $3); }
-    | eq_neq_or_compare TK_OC_NE compare_or_sum     { $$ = createParentNode2Children($2, $1, $3); }
+    eq_neq_or_compare TK_OC_EQ compare_or_sum       { $$ = createParentNode2Children(lexToNode($2), $1, $3); }
+    | eq_neq_or_compare TK_OC_NE compare_or_sum     { $$ = createParentNode2Children(lexToNode($2), $1, $3); }
     | compare_or_sum                                { $$ = $1; };
 compare_or_sum: 
-    compare_or_sum TK_OC_LE sum_sub_or_mult_div_or_pow       { $$ = createParentNode2Children($2, $1, $3); }
-    | compare_or_sum TK_OC_GE sum_sub_or_mult_div_or_pow     { $$ = createParentNode2Children($2, $1, $3); } 
+    compare_or_sum TK_OC_LE sum_sub_or_mult_div_or_pow       { $$ = createParentNode2Children(lexToNode($2), $1, $3); }
+    | compare_or_sum TK_OC_GE sum_sub_or_mult_div_or_pow     { $$ = createParentNode2Children(lexToNode($2), $1, $3); } 
     | compare_or_sum '<' sum_sub_or_mult_div_or_pow          { $$ = createParentNode2Children(lexToNode(lexValueFromSC('<')), $1, $3); }
     | compare_or_sum '>' sum_sub_or_mult_div_or_pow          { $$ = createParentNode2Children(lexToNode(lexValueFromSC('>')), $1, $3); }  
     | sum_sub_or_mult_div_or_pow                             { $$ = $1; };  
@@ -220,13 +220,13 @@ unsigned_literal:
     | TK_LIT_FLOAT               { $$ = createLeaf($1); };
 
 opt_unary_operator: 
-    '+'                    { $$ = createLeaf('+'); }
-    | '-'                  { $$ = createLeaf('-'); }
-    | '!'                  { $$ = createLeaf('!'); }
-    | '&'                  { $$ = createLeaf('&'); }
-    | '*'                  { $$ = createLeaf('*'); }
-    | '?'                  { $$ = createLeaf('?'); }
-    | '#'                  { $$ = createLeaf('#'); };
+    '+'                    { $$ = createLeaf(lexValueFromSC('+')); }
+    | '-'                  { $$ = createLeaf(lexValueFromSC('-')); }
+    | '!'                  { $$ = createLeaf(lexValueFromSC('!')); }
+    | '&'                  { $$ = createLeaf(lexValueFromSC('&')); }
+    | '*'                  { $$ = createLeaf(lexValueFromSC('*')); }
+    | '?'                  { $$ = createLeaf(lexValueFromSC('?')); }
+    | '#'                  { $$ = createLeaf(lexValueFromSC('#')); };
 
 
 %%
