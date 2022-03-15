@@ -16,9 +16,10 @@ struct node* connect(struct node* node1, struct node* node2);
 struct node* createRoot(struct node* node1, struct node* node2);
 struct node* createParentNode1Child(struct node* parent, struct node* child);
 struct node* createParentNode2Children(struct node* parent, struct node* child1, struct node* child2);
-struct node* createParent2Children(struct lex_value_t* lex_value, struct node* child1, struct node* child2);
 struct node* createParentNode3Children(struct node* parent, struct node* child1, struct node* child2, struct node* child3);
 struct node* createParentNode4Children(struct node* parent, struct node* child1, struct node* child2, struct node* child3, struct node* child4);
+
+struct node* lexToNode(struct lex_value_t* lex_value);
 
 struct node* createLeaf(struct lex_value_t* lex_value);
 struct node* createLeaf(struct lex_value_t* lex_value1, struct lex_value_t* lex_value2);
