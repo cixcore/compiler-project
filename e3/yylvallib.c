@@ -1,6 +1,5 @@
 /* Grupo H - Carlos Morvan Santiago, Maria Cecília Corrêa */
 #include <stdlib.h>
-#include <string.h> 
 #include <stdio.h>
 #include "parser.tab.h"
 #include "yylvallib.h"
@@ -25,6 +24,11 @@ void yylval_float(float value) {
 
 void yylval_char(char value) {
     alloc_lex_value(LIT_CHAR);
+    yylval.valor_lexico->token.character = value;
+}
+
+void yylval_char_sc(char value) {
+    alloc_lex_value(SC);
     yylval.valor_lexico->token.character = value;
 }
 

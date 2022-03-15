@@ -2,7 +2,7 @@
 #define TRUE 1
 #define FALSE 0
 
-#define CE 1
+#define SC 1
 #define OC 2
 #define ID 3
 #define PR 4
