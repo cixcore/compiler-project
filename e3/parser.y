@@ -59,67 +59,174 @@
 %token<valor_lexico> TK_IDENTIFICADOR
 %token<valor_lexico> TOKEN_ERRO
 
+%type<valor_lexico> opt_sign
+%type<nodo> program func command_block command dec_var_local var_local_list var_local literal attr input output func_call 
+%type<nodo> shift shift_op return if_then_else_opt else_opt for_block while_block expr logical_or_or_and logical_and_or_bit_or bit_or_or_bit_and 
+%type<nodo> bit_and_or_eq eq_neq_or_compare compare_or_sum sum_sub_or_mult_div_or_pow mult_div_or_pow pow_or_op unary_expr operand unsigned_literal opt_unary_operator
+
 %%
 
-program: program dec_var_global | program func | %empty;
+program: 
+    program dec_var_global  { $$ = $1; }
+    | program func          { createRoot($1, $2); $$ = $2; }
+    | %empty                { $$ = NULL; };
 
 dec_var_global: static type var_global_list ';';
-static: TK_PR_STATIC | %empty;
+static: 
+    TK_PR_STATIC 
+    | %empty;
 type: TK_PR_INT | TK_PR_FLOAT | TK_PR_CHAR | TK_PR_BOOL | TK_PR_STRING;
-var_global_list: var_global ',' var_global_list | var_global;
-var_global: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' TK_LIT_INT ']';
+var_global_list: 
+    var_global ',' var_global_list 
+    | var_global;
+var_global: 
+    TK_IDENTIFICADOR 
+    | TK_IDENTIFICADOR '[' TK_LIT_INT ']';
 
-func: static type TK_IDENTIFICADOR '('parameters')' '{'command_block'}';
-parameters: parameters_list | %empty;
-parameters_list: parameter ',' parameters_list | parameter;
+func: static type TK_IDENTIFICADOR '('parameters')' '{'command_block'}' { $$ = createParentNode1Child($3, $8); };
+
+parameters: 
+    parameters_list 
+    | %empty;
+parameters_list: 
+    parameter ',' parameters_list 
+    | parameter;
 parameter: const type TK_IDENTIFICADOR;
-const: TK_PR_CONST | %empty;
-command_block: command ';' command_block | %empty;
-command: '{'command_block'}' | dec_var_local | attr | input | output | func_call | shift | return | TK_PR_BREAK | TK_PR_CONTINUE | if_then_else_opt | for_block | while_block;
+const: 
+    TK_PR_CONST 
+    | %empty;
 
-dec_var_local: static const type var_local_list;
-var_local_list: var_local ',' var_local_list | var_local;
-var_local: TK_IDENTIFICADOR | TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR | TK_IDENTIFICADOR TK_OC_LE literal;
-literal: opt_sign TK_LIT_INT | opt_sign TK_LIT_FLOAT | TK_LIT_FALSE | TK_LIT_TRUE | TK_LIT_CHAR | TK_LIT_STRING;
-opt_sign: '+' | '-' | %empty
+command_block: 
+    command ';' command_block   { $$ = connect($1, $3); }
+    | %empty                    { $$ = NULL; };
 
-attr: TK_IDENTIFICADOR '=' expr | TK_IDENTIFICADOR'[' expr ']' '=' expr;
+command: 
+    '{'command_block'}'     { $$ = $2; }
+    | dec_var_local         { $$ = $1; }
+    | attr                  { $$ = $1; }
+    | input                 { $$ = $1; }
+    | output                { $$ = $1; }
+    | func_call             { $$ = $1; }
+    | shift                 { $$ = $1; }
+    | return                { $$ = $1; }
+    | TK_PR_BREAK           { $$ = createLeaf($1); }
+    | TK_PR_CONTINUE        { $$ = createLeaf($1); }
+    | if_then_else_opt      { $$ = $1; }
+    | for_block             { $$ = $1; }
+    | while_block           { $$ = $1; };
 
-input:  TK_PR_INPUT TK_IDENTIFICADOR;
-output: TK_PR_OUTPUT TK_IDENTIFICADOR | TK_PR_OUTPUT literal;
+dec_var_local: static const type var_local_list { $$ = $4; };
+var_local_list: 
+    var_local ',' var_local_list                { $$ = connect($1, $3); }
+    | var_local                                 { $$ = $1; };
+var_local: 
+    TK_IDENTIFICADOR                                { $$ = NULL; }    
+    | TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR    { $$ = createParentNode2Children($2, $1, $3); }
+    | TK_IDENTIFICADOR TK_OC_LE literal             { $$ = createParentNode2Children($2, $1, $3); };
 
-func_call: TK_IDENTIFICADOR '('func_call_parameters_list')';
+literal: 
+    opt_sign TK_LIT_INT             { $$ = createLeaf($1, $2); }
+    | opt_sign TK_LIT_FLOAT         { $$ = createLeaf($1, $2); }
+    | TK_LIT_FALSE                  { $$ = createLeaf($1); }
+    | TK_LIT_TRUE                   { $$ = createLeaf($1); }
+    | TK_LIT_CHAR                   { $$ = createLeaf($1); }
+    | TK_LIT_STRING                 { $$ = createLeaf($1); };
+opt_sign: 
+    '+'         { $$ = lexValueFrom('+'); }
+    | '-'       { $$ = lexValueFrom('-')); }
+    | %empty    { $$ = NULL; }
+
+attr: 
+    TK_IDENTIFICADOR '=' expr                   { $$ = createParent2Children(lexValueFrom('='), $1, $3); }
+    | TK_IDENTIFICADOR'[' expr ']' '=' expr     { $$ = createParent2Children(lexValueFrom('='), createParentNode2Children("[]", $1, $3), $6); };
+
+input:  TK_PR_INPUT TK_IDENTIFICADOR     { $$ = createParentNode1Child($1, createLeaf($2)); };
+output: 
+    TK_PR_OUTPUT TK_IDENTIFICADOR        { $$ = createParentNode1Child($1, createLeaf($2)); }
+    | TK_PR_OUTPUT literal               { $$ = createParentNode1Child($1, $2); };
+
+func_call: TK_IDENTIFICADOR '('func_call_parameters_list')'    { $$ = createFuncCallLeaf($1) };
 func_call_parameters_list: func_call_parameter ',' func_call_parameters_list | func_call_parameter;
 func_call_parameter: expr | %empty;
 
-shift: TK_IDENTIFICADOR optional_vec shift_op TK_LIT_INT;
-optional_vec: '[' expr ']' | %empty;
-shift_op: TK_OC_SL | TK_OC_SR;
+shift: 
+    TK_IDENTIFICADOR shift_op TK_LIT_INT                    { $$ = createParentNode2Children($2, $1, $3); }
+    | TK_IDENTIFICADOR '[' expr ']' shift_op TK_LIT_INT     { $$ = createParentNode2Children($5, createParentNode2Children("[]", $1, $3), $6); };
 
-return: TK_PR_RETURN expr;
+shift_op: 
+    TK_OC_SL        { $$ = createLeaf($1); }
+    | TK_OC_SR      { $$ = createLeaf($1); };
 
-if_then_else_opt: TK_PR_IF'('expr')' '{' command_block '}' else_opt;
-else_opt: TK_PR_ELSE '{'command_block'}' | %empty;
+return: TK_PR_RETURN expr   { $$ = createParentNode1Child($1, $2); };
 
-for_block: TK_PR_FOR'(' attr ':' expr ':' attr ')' '{' command_block '}'
-while_block: TK_PR_WHILE'(' expr ')' TK_PR_DO '{' command_block '}'
+if_then_else_opt: TK_PR_IF'('expr')' '{' command_block '}' else_opt { $$ = createParentNode3Children($1, $3, $6, $8); };
+else_opt: 
+    TK_PR_ELSE '{'command_block'}'  { $$ = $3; }
+    | %empty                        { $$ = NULL; };
 
-expr: logical_or_or_and '?' expr ':' expr | logical_or_or_and;
-logical_or_or_and: logical_or_or_and TK_OC_OR logical_and_or_bit_or | logical_and_or_bit_or;
-logical_and_or_bit_or: logical_and_or_bit_or TK_OC_AND bit_or_or_bit_and | bit_or_or_bit_and;
-bit_or_or_bit_and: bit_or_or_bit_and '|' bit_and_or_eq | bit_and_or_eq;
-bit_and_or_eq: bit_and_or_eq '&' eq_neq_or_compare | eq_neq_or_compare;
-eq_neq_or_compare: eq_neq_or_compare TK_OC_EQ compare_or_sum | eq_neq_or_compare TK_OC_NE compare_or_sum | compare_or_sum;
-compare_or_sum: compare_or_sum TK_OC_LE sum_sub_or_mult_div_or_pow | compare_or_sum TK_OC_GE sum_sub_or_mult_div_or_pow | compare_or_sum '<' sum_sub_or_mult_div_or_pow | compare_or_sum '>' sum_sub_or_mult_div_or_pow | sum_sub_or_mult_div_or_pow;  
-sum_sub_or_mult_div_or_pow: sum_sub_or_mult_div_or_pow '+' mult_div_or_pow | sum_sub_or_mult_div_or_pow '-' mult_div_or_pow | mult_div_or_pow;
-mult_div_or_pow: mult_div_or_pow '*' pow_or_op | mult_div_or_pow '/' pow_or_op | mult_div_or_pow '%' pow_or_op | pow_or_op;  
-pow_or_op: pow_or_op '^' unary_expr | unary_expr; 
+for_block: 
+    TK_PR_FOR'(' attr ':' expr ':' attr ')' '{' command_block '}'   { $$ = createParentNode4Children($1, $3, $5, $7, $10); };
+while_block: TK_PR_WHILE'(' expr ')' TK_PR_DO '{' command_block '}' { $$ = createParentNode2Children($1, $3, $7) };
 
-unary_expr: opt_unary_operator unary_expr | operand;
-operand: unsigned_literal | TK_IDENTIFICADOR optional_vec | func_call | '('expr')';
-unsigned_literal: TK_LIT_INT | TK_LIT_FLOAT;
+expr: 
+    logical_or_or_and '?' expr ':' expr     { $$ = createParentNode3Children("?:", $1, $3, $5); }
+    | logical_or_or_and                     { $$ = $1; };
+logical_or_or_and: 
+    logical_or_or_and TK_OC_OR logical_and_or_bit_or { $$ = createParentNode2Children($2, $1, $3); }
+    | logical_and_or_bit_or                          { $$ = $1; };
+logical_and_or_bit_or: 
+    logical_and_or_bit_or TK_OC_AND bit_or_or_bit_and { $$ = createParentNode2Children($2, $1, $3); }
+    | bit_or_or_bit_and                               { $$ = $1; };  
+bit_or_or_bit_and: 
+    bit_or_or_bit_and '|' bit_and_or_eq             { $$ = createParent2Children(lexValueFrom('|'), $1, $3); }
+    | bit_and_or_eq                                 { $$ = $1; };  
+bit_and_or_eq: 
+    bit_and_or_eq '&' eq_neq_or_compare             { $$ = createParent2Children(lexValueFrom('&'), $1, $3); }
+    | eq_neq_or_compare                             { $$ = $1; };  
+eq_neq_or_compare: 
+    eq_neq_or_compare TK_OC_EQ compare_or_sum       { $$ = createParentNode2Children($2, $1, $3); }
+    | eq_neq_or_compare TK_OC_NE compare_or_sum     { $$ = createParentNode2Children($2, $1, $3); }
+    | compare_or_sum                                { $$ = $1; };
+compare_or_sum: 
+    compare_or_sum TK_OC_LE sum_sub_or_mult_div_or_pow       { $$ = createParentNode2Children($2, $1, $3); }
+    | compare_or_sum TK_OC_GE sum_sub_or_mult_div_or_pow     { $$ = createParentNode2Children($2, $1, $3); } 
+    | compare_or_sum '<' sum_sub_or_mult_div_or_pow          { $$ = createParent2Children(lexValueFrom('<'), $1, $3); }
+    | compare_or_sum '>' sum_sub_or_mult_div_or_pow          { $$ = createParent2Children(lexValueFrom('>'), $1, $3); }  
+    | sum_sub_or_mult_div_or_pow                             { $$ = $1; };  
+sum_sub_or_mult_div_or_pow: 
+    sum_sub_or_mult_div_or_pow '+' mult_div_or_pow       { $$ = createParent2Children(lexValueFrom('+'), $1, $3); }
+    | sum_sub_or_mult_div_or_pow '-' mult_div_or_pow     { $$ = createParent2Children(lexValueFrom('-'), $1, $3); }
+    | mult_div_or_pow                                    { $$ = $1; };  
+mult_div_or_pow: 
+    mult_div_or_pow '*' pow_or_op       { $$ = createParent2Children(lexValueFrom('*'), $1, $3); }
+    | mult_div_or_pow '/' pow_or_op     { $$ = createParent2Children(lexValueFrom('/'), $1, $3); }
+    | mult_div_or_pow '%' pow_or_op     { $$ = createParent2Children(lexValueFrom('%'), $1, $3); }
+    | pow_or_op                         { $$ = $1; };  
+pow_or_op: 
+    pow_or_op '^' unary_expr            { $$ = createParent2Children(lexValueFrom('^'), $1, $3); }
+    | unary_expr                        { $$ = $1; };  
 
-opt_unary_operator: '+' | '-' | '!' | '&' | '*' | '?' | '#';
+unary_expr: 
+    opt_unary_operator unary_expr   { $$ = connect($1, $2); }
+    | operand                       { $$ = $1; };
+operand: 
+    unsigned_literal                    { $$ = $1; }
+    | TK_IDENTIFICADOR                  { $$ = createLeaf($1); }
+    | TK_IDENTIFICADOR '[' expr ']'     { $$ = createParentNode2Children("[]", $1, $3); };
+    | func_call                         { $$ = $1; }
+    | '('expr')'                        { $$ = $2; };
+unsigned_literal: 
+    TK_LIT_INT                   { $$ = createLeaf($1); }
+    | TK_LIT_FLOAT               { $$ = createLeaf($1); };
+
+opt_unary_operator: 
+    '+'                    { $$ = createLeaf('+'); }
+    | '-'                  { $$ = createLeaf('-'); }
+    | '!'                  { $$ = createLeaf('!'); }
+    | '&'                  { $$ = createLeaf('&'); }
+    | '*'                  { $$ = createLeaf('*'); }
+    | '?'                  { $$ = createLeaf('?'); }
+    | '#'                  { $$ = createLeaf('#'); };
 
 
 %%
