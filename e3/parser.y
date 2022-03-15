@@ -59,7 +59,6 @@
 %token<valor_lexico> TK_IDENTIFICADOR
 %token<valor_lexico> TOKEN_ERRO
 
-%type<valor_lexico> opt_sign
 %type<nodo> program func command_block command dec_var_local var_local_list var_local literal attr input output func_call 
 %type<nodo> shift shift_op return if_then_else_opt else_opt for_block while_block expr logical_or_or_and logical_and_or_bit_or bit_or_or_bit_and 
 %type<nodo> bit_and_or_eq eq_neq_or_compare compare_or_sum sum_sub_or_mult_div_or_pow mult_div_or_pow pow_or_op unary_expr operand unsigned_literal opt_unary_operator
@@ -125,20 +124,21 @@ var_local:
     | TK_IDENTIFICADOR TK_OC_LE literal             { $$ = createParentNode2Children($2, $1, $3); };
 
 literal: 
-    opt_sign TK_LIT_INT             { $$ = createLeaf($1, $2); }
-    | opt_sign TK_LIT_FLOAT         { $$ = createLeaf($1, $2); }
+    '-' TK_LIT_INT                  { $$ = createNLeaf($2); }
+    | '+' TK_LIT_INT                { $$ = createLeaf($2); }
+    |  TK_LIT_INT                   { $$ = createLeaf($2); }
+    | '+' TK_LIT_FLOAT              { $$ = createLeaf($2); }
+    | '-' TK_LIT_FLOAT              { $$ = createNLeaf($2); }
+    | TK_LIT_FLOAT                  { $$ = createLeaf($2); }
     | TK_LIT_FALSE                  { $$ = createLeaf($1); }
     | TK_LIT_TRUE                   { $$ = createLeaf($1); }
     | TK_LIT_CHAR                   { $$ = createLeaf($1); }
     | TK_LIT_STRING                 { $$ = createLeaf($1); };
-opt_sign: 
-    '+'         { $$ = lexValueFrom('+'); }
-    | '-'       { $$ = lexValueFrom('-')); }
-    | %empty    { $$ = NULL; }
+
 
 attr: 
-    TK_IDENTIFICADOR '=' expr                   { $$ = createParentNode2Children(lexToNode(lexValueFrom('=')), $1, $3); }
-    | TK_IDENTIFICADOR'[' expr ']' '=' expr     { $$ = createParentNode2Children(lexToNode(lexValueFrom('=')), createParentNode2Children("[]", $1, $3), $6); };
+    TK_IDENTIFICADOR '=' expr                   { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), $1, $3); }
+    | TK_IDENTIFICADOR'[' expr ']' '=' expr     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), createParentNode2Children("[]", $1, $3), $6); };
 
 input:  TK_PR_INPUT TK_IDENTIFICADOR     { $$ = createParentNode1Child($1, createLeaf($2)); };
 output: 
@@ -169,7 +169,7 @@ for_block:
 while_block: TK_PR_WHILE'(' expr ')' TK_PR_DO '{' command_block '}' { $$ = createParentNode2Children(lexToNode($1), $3, $7) };
 
 expr: 
-    logical_or_or_and '?' expr ':' expr     { $$ = createParentNode3Children("?:", $1, $3, $5); }
+    logical_or_or_and '?' expr ':' expr     { $$ = createParentNode3Children(lexToNode(lexValueFromOC("?:")), $1, $3, $5); }
     | logical_or_or_and                     { $$ = $1; };
 logical_or_or_and: 
     logical_or_or_and TK_OC_OR logical_and_or_bit_or { $$ = createParentNode2Children($2, $1, $3); }
@@ -178,10 +178,10 @@ logical_and_or_bit_or:
     logical_and_or_bit_or TK_OC_AND bit_or_or_bit_and { $$ = createParentNode2Children($2, $1, $3); }
     | bit_or_or_bit_and                               { $$ = $1; };  
 bit_or_or_bit_and: 
-    bit_or_or_bit_and '|' bit_and_or_eq             { $$ = createParentNode2Children(lexToNode(lexValueFrom('|')), $1, $3); }
+    bit_or_or_bit_and '|' bit_and_or_eq             { $$ = createParentNode2Children(lexToNode(lexValueFromSC('|')), $1, $3); }
     | bit_and_or_eq                                 { $$ = $1; };  
 bit_and_or_eq: 
-    bit_and_or_eq '&' eq_neq_or_compare             { $$ = createParentNode2Children(lexToNode(lexValueFrom('&')), $1, $3); }
+    bit_and_or_eq '&' eq_neq_or_compare             { $$ = createParentNode2Children(lexToNode(lexValueFromSC('&')), $1, $3); }
     | eq_neq_or_compare                             { $$ = $1; };  
 eq_neq_or_compare: 
     eq_neq_or_compare TK_OC_EQ compare_or_sum       { $$ = createParentNode2Children($2, $1, $3); }
@@ -190,20 +190,20 @@ eq_neq_or_compare:
 compare_or_sum: 
     compare_or_sum TK_OC_LE sum_sub_or_mult_div_or_pow       { $$ = createParentNode2Children($2, $1, $3); }
     | compare_or_sum TK_OC_GE sum_sub_or_mult_div_or_pow     { $$ = createParentNode2Children($2, $1, $3); } 
-    | compare_or_sum '<' sum_sub_or_mult_div_or_pow          { $$ = createParentNode2Children(lexToNode(lexValueFrom('<')), $1, $3); }
-    | compare_or_sum '>' sum_sub_or_mult_div_or_pow          { $$ = createParentNode2Children(lexToNode(lexValueFrom('>')), $1, $3); }  
+    | compare_or_sum '<' sum_sub_or_mult_div_or_pow          { $$ = createParentNode2Children(lexToNode(lexValueFromSC('<')), $1, $3); }
+    | compare_or_sum '>' sum_sub_or_mult_div_or_pow          { $$ = createParentNode2Children(lexToNode(lexValueFromSC('>')), $1, $3); }  
     | sum_sub_or_mult_div_or_pow                             { $$ = $1; };  
 sum_sub_or_mult_div_or_pow: 
-    sum_sub_or_mult_div_or_pow '+' mult_div_or_pow       { $$ = createParentNode2Children(lexToNode(lexValueFrom('+')), $1, $3); }
-    | sum_sub_or_mult_div_or_pow '-' mult_div_or_pow     { $$ = createParentNode2Children(lexToNode(lexValueFrom('-')), $1, $3); }
+    sum_sub_or_mult_div_or_pow '+' mult_div_or_pow       { $$ = createParentNode2Children(lexToNode(lexValueFromSC('+')), $1, $3); }
+    | sum_sub_or_mult_div_or_pow '-' mult_div_or_pow     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('-')), $1, $3); }
     | mult_div_or_pow                                    { $$ = $1; };  
 mult_div_or_pow: 
-    mult_div_or_pow '*' pow_or_op       { $$ = createParentNode2Children(lexToNode(lexValueFrom('*')), $1, $3); }
-    | mult_div_or_pow '/' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFrom('/')), $1, $3); }
-    | mult_div_or_pow '%' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFrom('%')), $1, $3); }
+    mult_div_or_pow '*' pow_or_op       { $$ = createParentNode2Children(lexToNode(lexValueFromSC('*')), $1, $3); }
+    | mult_div_or_pow '/' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('/')), $1, $3); }
+    | mult_div_or_pow '%' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('%')), $1, $3); }
     | pow_or_op                         { $$ = $1; };
 pow_or_op: 
-    pow_or_op '^' unary_expr            { $$ = createParentNode2Children(lexToNode(lexValueFrom('^')), $1, $3); }
+    pow_or_op '^' unary_expr            { $$ = createParentNode2Children(lexToNode(lexValueFromSC('^')), $1, $3); }
     | unary_expr                        { $$ = $1; };
 
 unary_expr: 
@@ -212,7 +212,7 @@ unary_expr:
 operand: 
     unsigned_literal                    { $$ = $1; }
     | TK_IDENTIFICADOR                  { $$ = createLeaf($1); }
-    | TK_IDENTIFICADOR '[' expr ']'     { $$ = createParentNode2Children("[]", $1, $3); };
+    | TK_IDENTIFICADOR '[' expr ']'     { $$ = createParentNode2Children(lexToNode(lexValueFromOC("[]")), $1, $3); };
     | func_call                         { $$ = $1; }
     | '('expr')'                        { $$ = $2; };
 unsigned_literal: 
