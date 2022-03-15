@@ -50,10 +50,15 @@ struct node* lexToNode(struct lex_value_t* lex_value){
 }
 
 struct node* createLeaf(struct lex_value_t* lex_value){
-    struct node* newNode = (struc)
+    struct node* newNode = (struct node*)malloc(sizeof(struct node));
+    node->lexValue = lex_value;
     return newNode;
 }
 struct node* createNLeaf(struct lex_value_t* lex_value){
+    struct node* newNode = (struct node*)malloc(sizeof(struct node));
+    if(lex_value)
+    node->lexValue = lex_value;
+    return newNode;
 }
 struct node* createFuncCallLeaf(struct lex_value_t* lex_value){
 }
