@@ -22,6 +22,7 @@ struct node* createParentNode4Children(struct node* parent, struct node* child1,
 struct node* lexToNode(struct lex_value_t* lex_value);
 
 struct node* createLeaf(struct lex_value_t* lex_value);
-struct node* createLeaf(struct lex_value_t* lex_value1, struct lex_value_t* lex_value2);
+struct node* createNLeaf(struct lex_value_t* lex_value);
 
 struct lex_value_t* lexValueFromSC(char schar);
+struct lex_value_t* lexValueFromOC(char schar);
