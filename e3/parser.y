@@ -120,7 +120,7 @@ var_local_list:
     var_local ',' var_local_list                { $$ = connect($1, $3); }
     | var_local                                 { $$ = $1; };
 var_local: 
-    TK_IDENTIFICADOR                                { $$ = NULL; }
+    TK_IDENTIFICADOR                                { free_unused_lex_val($1); $$ = NULL; }
     | TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR    { $$ = createParentNode2Children(lexToNode($2), lexToNode($1), lexToNode($3)); }
     | TK_IDENTIFICADOR TK_OC_LE literal             { $$ = createParentNode2Children(lexToNode($2), lexToNode($1), $3); };
 
