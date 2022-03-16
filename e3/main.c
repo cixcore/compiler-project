@@ -14,9 +14,7 @@ int main (int argc, char **argv)
 {
     int ret = yyparse();
     exporta(arvore);
-    printf("finished exporta");
     libera(arvore);
-    printf("finished libera");
     arvore = NULL;
     yylex_destroy();
     return ret;

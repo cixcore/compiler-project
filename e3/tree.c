@@ -41,7 +41,7 @@ void nodes(struct node *no)
 
 void labels(struct node *no)
 {
-    if (no != NULL && no->value != NULL)
+    if (no != NULL)
     {
         printf("%p [label=\"", no);
 
@@ -88,7 +88,8 @@ void labels(struct node *no)
             default:
                 break;
         }
-
+        printf("\"];\n");
+        
         for (int i = 0; i < MAX_CHILDREN; i++)
         {
             if (no->children[i] != NULL)
@@ -102,7 +103,6 @@ void labels(struct node *no)
             labels(no->next);
         }
 
-        printf("\"];\n");
     }
 }
 
@@ -121,7 +121,7 @@ void freeTheTreeeees(struct node *no)
         }
         freeTheTreeeees(no->next);
 
-        if(no->value->token.str != NULL ) {
+        if(typeStr(no->value->type)) {
             free(no->value->token.str);
         }
         free(no->value);
@@ -129,19 +129,20 @@ void freeTheTreeeees(struct node *no)
     }
 }
 
-struct node *connect(struct node *node1, struct node *node2)
+void free_unused_lex_val(struct lex_value_t *lex_val)
 {
-    int line1 = 0;
-    int line2 = 0;
-    if (node1 != NULL)
-    {
-        line1 = node1->value->line; 
+    if(typeStr(lex_val->type)) {
+        free(lex_val->token.str);
     }
-    if (node2 != NULL)
-    {
-        line2 = node2->value->line; 
-    }
-    
+    free(lex_val);
+}
+
+int typeStr(int type) {
+    return type == OC || type == ID || type == PR || type == FUNC_CALL || type == LIT_STR;
+}
+
+struct node *connect(struct node *node1, struct node *node2)
+{    
     if(node1 != NULL) {
         struct node *iter = node1;
         while (iter != NULL && iter->next != NULL)
@@ -168,12 +169,17 @@ void createRoot(struct node *node1, struct node *node2)
 struct node *createParentNode1Child(struct node *parent, struct node *child)
 {
     parent->children[0] = child;
+    parent->children[1] = NULL;
+    parent->children[2] = NULL;
+    parent->children[3] = NULL;
     return parent;
 }
 struct node *createParentNode2Children(struct node *parent, struct node *child0, struct node *child1)
 {
     parent->children[0] = child0;
     parent->children[1] = child1;
+    parent->children[2] = NULL;
+    parent->children[3] = NULL;
     return parent;
 }
 struct node *createParentNode3Children(struct node *parent, struct node *child0, struct node *child1, struct node *child2)
@@ -181,6 +187,7 @@ struct node *createParentNode3Children(struct node *parent, struct node *child0,
     parent->children[0] = child0;
     parent->children[1] = child1;
     parent->children[2] = child2;
+    parent->children[3] = NULL;
     return parent;
 }
 struct node *createParentNode4Children(struct node *parent, struct node *child0, struct node *child1, struct node *child2, struct node *child3)
@@ -196,6 +203,11 @@ struct node *lexToNode(struct lex_value_t *lex_value)
 {
     struct node *newNode = (struct node *)malloc(sizeof(struct node));
     newNode->value = lex_value;
+    newNode->next = NULL;
+    newNode->children[0] = NULL;
+    newNode->children[1] = NULL;
+    newNode->children[2] = NULL;
+    newNode->children[3] = NULL;
     return newNode;
 }
 
@@ -203,6 +215,11 @@ struct node *createLeaf(struct lex_value_t *lex_value)
 {
     struct node *newNode = (struct node *)malloc(sizeof(struct node));
     newNode->value = lex_value;
+    newNode->next = NULL;
+    newNode->children[0] = NULL;
+    newNode->children[1] = NULL;
+    newNode->children[2] = NULL;
+    newNode->children[3] = NULL;
     return newNode;
 }
 struct node *createNLeaf(struct lex_value_t *lex_value)
@@ -217,13 +234,23 @@ struct node *createNLeaf(struct lex_value_t *lex_value)
         lex_value->token.flt = -lex_value->token.flt;
     }
     newNode->value = lex_value;
+    newNode->next = NULL;
+    newNode->children[0] = NULL;
+    newNode->children[1] = NULL;
+    newNode->children[2] = NULL;
+    newNode->children[3] = NULL;
     return newNode;
 }
-struct node *createFuncCallLeaf(struct lex_value_t *lex_value)
+struct node *createFuncCallNode(struct lex_value_t *lex_value)
 {
     struct node *newNode = (struct node *)malloc(sizeof(struct node));
     lex_value->type = FUNC_CALL;
     newNode->value = lex_value;
+    newNode->next = NULL;
+    newNode->children[0] = NULL;
+    newNode->children[1] = NULL;
+    newNode->children[2] = NULL;
+    newNode->children[3] = NULL;
     return newNode;
 }
 

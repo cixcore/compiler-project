@@ -60,11 +60,7 @@
 [0-9]+\.[0-9]+([Ee](\+|\-)?[0-9]+)?     { yylval_float(atof(yytext)); return TK_LIT_FLOAT; }
 [0-9]+                                  { yylval_int(atoi(yytext)); return TK_LIT_INT; }
 
-'("\\".|[^'\n\t])'        {
-    char* char_remove_sing_quotes = strdup(yytext);
-    yylval_char(char_remove_sing_quotes[1]); 
-    return TK_LIT_CHAR;
-}
+'[^'\n\t]'        { yylval_char(yytext[1]); return TK_LIT_CHAR; }
 
 \"("\\".|[^"\n\t])*\"     {
     char* str_remove_quotes = strdup(&yytext[1]);

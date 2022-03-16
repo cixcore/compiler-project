@@ -27,11 +27,6 @@ void yylval_char(char value) {
     yylval.valor_lexico->token.character = value;
 }
 
-void yylval_char_sc(char value) {
-    alloc_lex_value(SC);
-    yylval.valor_lexico->token.character = value;
-}
-
 void yylval_bool(int value) {
     alloc_lex_value(LIT_BOOL);
     yylval.valor_lexico->token.boolean = value;

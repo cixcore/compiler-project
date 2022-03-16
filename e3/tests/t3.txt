@@ -1,0 +1,4 @@
+static int func (){
+	f(*&b);
+	exp = soma('a',c) > 20 ? avalia(a,"b",**&(&V)) : a^4;
+}

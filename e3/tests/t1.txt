@@ -1,0 +1,4 @@
+static int func (){
+	a = c && b;
+	exp = f(a,b) > 10 ? g('a') : **a;
+}

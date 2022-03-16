@@ -4,7 +4,7 @@
 #
 
 etapa3: parser.tab.c lex.yy.c
-	gcc -c lex.yy.c parser.tab.c yylvallib.c tree.c
+	gcc -c lex.yy.c parser.tab.c yylvallib.c tree.c -g
 	gcc -o etapa3 main.c lex.yy.o parser.tab.o yylvallib.o tree.o -lfl -g
 parser.tab.c: parser.y
 	bison -v -d parser.y
