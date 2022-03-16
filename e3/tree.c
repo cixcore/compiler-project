@@ -6,22 +6,28 @@
 #include "yylvallib.h"
 
 
-
-void exporta(void *tree) {
-
-}
-
-void libera(void *tree) {
-
-}
 void exporta(void *tree){
+    
 }
 void libera(void *tree){
 }
 
 struct node* connect(struct node* node1, struct node* node2){
+    struct node* iter = node1->prox;
+    while (iter != NULL && iter->prox != NULL)
+    {
+        iter = iter->prox;
+    }
+    iter->prox = node2;
+    return node1;    
 }
-struct node* createRoot(struct node* node1, struct node* node2){
+void createRoot(struct node* node1, struct node* node2){
+    if(node1 == NULL) {
+        extern void *arvore;
+		arvore = (void*)node2;
+    } else {
+        node1->next = node2;
+    }
 }
 struct node* createParentNode1Child(struct node* parent, struct node* child){
     *parent.children[0] = child;
@@ -56,11 +62,19 @@ struct node* createLeaf(struct lex_value_t* lex_value){
 }
 struct node* createNLeaf(struct lex_value_t* lex_value){
     struct node* newNode = (struct node*)malloc(sizeof(struct node));
-    if(lex_value)
+    if(lex_value->type == LIT_INT) {
+        lex_value->token.integer = -lex_value->token.integer;
+    } else {
+        lex_value->token.flt = -lex_value->token.flt;
+    }
     node->lexValue = lex_value;
     return newNode;
 }
 struct node* createFuncCallLeaf(struct lex_value_t* lex_value){
+    struct node* newNode = (struct node*)malloc(sizeof(struct node));
+    lex_value->type = FUNC_CALL;
+    node->lexValue = lex_value;
+    return newNode;
 }
 
 struct lex_value_t* lexValueFromSC(char schar){
