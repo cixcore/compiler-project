@@ -1,0 +1,4 @@
+int foo(const int a, const float b, const char c, const bool d, const string e){
+	bar();
+	foobar(a, b, 1, 2, 3.5);
+}

@@ -119,7 +119,7 @@ var_local_list:
     var_local ',' var_local_list                { $$ = connect($1, $3); }
     | var_local                                 { $$ = $1; };
 var_local: 
-    TK_IDENTIFICADOR                                { $$ = NULL; }    
+    TK_IDENTIFICADOR                                { $$ = NULL; }
     | TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR    { $$ = createParentNode2Children(lexToNode($2), lexToNode($1), lexToNode($3)); }
     | TK_IDENTIFICADOR TK_OC_LE literal             { $$ = createParentNode2Children(lexToNode($2), lexToNode($1), $3); };
 
@@ -147,7 +147,7 @@ output:
 
 func_call: TK_IDENTIFICADOR '('func_call_parameters_list')'    { $$ = createFuncCallLeaf($1); };
 func_call_parameters_list: func_call_parameter ',' func_call_parameters_list | func_call_parameter;
-func_call_parameter: expr | %empty;
+func_call_parameter: expr | TK_LIT_CHAR | TK_LIT_STRING | TK_LIT_FALSE | TK_LIT_TRUE | %empty;
 
 shift: 
     TK_IDENTIFICADOR shift_op TK_LIT_INT                    { $$ = createParentNode2Children($2, lexToNode($1), lexToNode($3)); }

@@ -13,7 +13,7 @@ void exporta(void *tree);
 void libera(void *tree);
 void labels(struct node *no);
 void nodes(struct node *no);
-
+void freeTheTreeeees(struct node *no);
 struct node* connect(struct node* node1, struct node* node2);
 void createRoot(struct node* node1, struct node* node2);
 struct node* createParentNode1Child(struct node* parent, struct node* child);

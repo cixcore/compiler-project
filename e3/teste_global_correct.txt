@@ -1,0 +1,202 @@
+
+static int svarint, svarint2, svarint3;
+static float svarfloat;
+static char svarchar;
+static bool svarbool;
+static string svarstring;
+
+int varint;
+float varfloat;
+char varchar;
+bool varbool;
+string varstring;
+
+static int vec[10];
+static float vec[10];
+static char vec[10];
+static bool vec[10];
+static string vec[10];
+
+int vec[10];
+float vec[10];
+char vec[10];
+bool vec[10];
+string vec[10];
+
+static int foo(){}
+static float foo(){}
+static char foo(){}
+static bool foo(){}
+static string foo(){}
+
+int foo(){}
+float foo(){}
+char foo(){}
+bool foo(){}
+string foo(){}
+
+int foo(){
+	{};
+}
+
+
+int foo(const int a, const float b, const char c, const bool d, const string e){}
+int foo(int a, float b, char c, bool d, string e){}
+int foo(const int a, int b, char c, const bool e){}
+
+int foo(const int a, const float b, const char c, const bool d, const string e){
+	static const int var;
+	static int var;
+	int var;
+	int var_a <= 0;
+	static const float var <= 'c';
+	static float var <= var_2;
+	static const int a, b, c, d <= 10, e, f <= b;
+}
+
+
+int foo(const int a, const float b, const char c, const bool d, const string e){
+	bar();
+	foobar(a, b, 1, 2, 3.5);
+
+}
+
+static int foo(){
+	identificador = 0;
+	vector[0] = 90;
+	var = 3.5;
+}
+
+static int foo(){
+	input identificador;
+	output identificador;
+	output 10;
+	output 10.2;
+	output 'c';
+	output "string";
+	output true;
+	output false;
+}
+
+static int foo(){
+	identificador << 10;
+	identificador << 10;
+	identificador[2+3] << 10;
+	identificador[var - 3 + var2] << 10;
+	identificador[var] >> 10;
+	identificador[var + 3 - var2] >> 3;
+
+}
+
+static int foo(){
+	continue;
+}
+
+static int foo(){
+	break;
+}
+
+static int foo(){
+	return 10;
+}
+
+static int foo(){
+	if (a & b) {
+		var = 2;
+	} else {
+		var = 3;
+	};
+}
+
+static int foo(){
+	if (2 + 3 - var * y <= 7) {
+		var = 2;
+	};
+}
+
+static int foo(){
+	if (2 + 3 - var * y <= 7) {
+		var = 2;
+	}else {
+		if (a > 2){
+		c = 7;
+		};
+		var = 18;
+	};
+}
+
+
+static int foo(){
+	for (i=0: i < 100: i = i+1){
+		mult = 10 * i;
+		output mult;
+	};
+}
+
+
+static int foo(int counter){
+	while (counter + 7 < 10) do {
+		output counter;
+		counter = counter + 1;
+	};
+}
+
+static int foo(int counter){
+	counter = 11;
+	while(counter < 10) do {};
+}
+
+
+static bool expressions(){
+	exp = ident;
+	exp = ?(?soma(10) + vetor[#h_table]);
+	exp = ident[-10 + 5 * 5];
+	exp = ident[!cond > 10];
+	exp = 10 > var && (oper > 2 ? 7*4/2 : a^7+4);
+	exp = 10 > var && (soma(a,b) > 3 ? -square(a) : 3 * square(b));
+}
+
+static bool arithmetic_expressions(){
+	exp = 2 + 3.2;
+	exp = valor + 7 / 2;
+	exp = vetor[2] + vetor[valor*7-2/4] - 42.42;
+	exp = vetor[2] + valor - (vetor[valor] * vetor[soma(a,b)]) / 7.5 % 3 ^ 9;
+	exp = +7 + -3 + !b + &k + *f + ?e + #hash;
+	
+}
+
+static bool logical_expressions(){
+	exp = a && b;
+	exp = a || b;
+	exp = a | b;
+	exp = a & b;
+	exp = a > b;
+	exp = a < b;
+	exp = a >= b;
+	exp = a <= b;
+	exp = a != b;
+	exp = a == b;
+	exp = a && b || c & d | f > g < h >= i <= j != k == l;
+	exp = a && (b || (c & d | (f > g < h) >= i)) <= (j != k) == l;
+}
+
+static bool tern_expressions(){
+	exp = -1 ? 2 : 3;
+	exp = soma(a,b) > 10 ? soma('a',c) > 20 ? avalia(a,"b",c) : a^4 : soma(true,c) < 5 ? t : t;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
