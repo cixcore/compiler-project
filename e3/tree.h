@@ -14,7 +14,7 @@ void libera(void *tree);
 void labels(struct node *no);
 void nodes(struct node *no);
 void freeTheTreeeees(struct node *no);
-void free_unused_lex_val(struct lex_value_t *lex_val);
+void free_lex_val(struct lex_value_t *lex_val);
 int typeStr(int type);
 struct node* connect(struct node* node1, struct node* node2);
 void createRoot(struct node* node1, struct node* node2);

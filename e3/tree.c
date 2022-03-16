@@ -121,15 +121,12 @@ void freeTheTreeeees(struct node *no)
         }
         freeTheTreeeees(no->next);
 
-        if(typeStr(no->value->type)) {
-            free(no->value->token.str);
-        }
-        free(no->value);
+        free_lex_val(no->value);
         free(no);
     }
 }
 
-void free_unused_lex_val(struct lex_value_t *lex_val)
+void free_lex_val(struct lex_value_t *lex_val)
 {
     if(typeStr(lex_val->type)) {
         free(lex_val->token.str);
@@ -213,45 +210,22 @@ struct node *lexToNode(struct lex_value_t *lex_value)
 
 struct node *createLeaf(struct lex_value_t *lex_value)
 {
-    struct node *newNode = (struct node *)malloc(sizeof(struct node));
-    newNode->value = lex_value;
-    newNode->next = NULL;
-    newNode->children[0] = NULL;
-    newNode->children[1] = NULL;
-    newNode->children[2] = NULL;
-    newNode->children[3] = NULL;
-    return newNode;
+    return lexToNode(lex_value);
 }
+
 struct node *createNLeaf(struct lex_value_t *lex_value)
 {
-    struct node *newNode = (struct node *)malloc(sizeof(struct node));
-    if (lex_value->type == LIT_INT)
-    {
+    if (lex_value->type == LIT_INT) {
         lex_value->token.integer = -lex_value->token.integer;
-    }
-    else
-    {
+    } else {
         lex_value->token.flt = -lex_value->token.flt;
     }
-    newNode->value = lex_value;
-    newNode->next = NULL;
-    newNode->children[0] = NULL;
-    newNode->children[1] = NULL;
-    newNode->children[2] = NULL;
-    newNode->children[3] = NULL;
-    return newNode;
+    return lexToNode(lex_value);
 }
 struct node *createFuncCallNode(struct lex_value_t *lex_value)
 {
-    struct node *newNode = (struct node *)malloc(sizeof(struct node));
     lex_value->type = FUNC_CALL;
-    newNode->value = lex_value;
-    newNode->next = NULL;
-    newNode->children[0] = NULL;
-    newNode->children[1] = NULL;
-    newNode->children[2] = NULL;
-    newNode->children[3] = NULL;
-    return newNode;
+    return lexToNode(lex_value);
 }
 
 struct lex_value_t *lexValueFromSC(char schar)

@@ -80,8 +80,8 @@ var_global_list:
     var_global ',' var_global_list 
     | var_global;
 var_global: 
-    TK_IDENTIFICADOR                          { free_unused_lex_val($1); }
-    | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { free_unused_lex_val($1); free_unused_lex_val($3); };
+    TK_IDENTIFICADOR                          { free_lex_val($1); }
+    | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { free_lex_val($1); free_lex_val($3); };
 
 func: static type TK_IDENTIFICADOR '('parameters')' '{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $8); };
 
@@ -91,7 +91,7 @@ parameters:
 parameters_list: 
     parameter ',' parameters_list 
     | parameter;
-parameter: const type TK_IDENTIFICADOR  { free_unused_lex_val($3); };
+parameter: const type TK_IDENTIFICADOR  { free_lex_val($3); };
 const: 
     TK_PR_CONST 
     | %empty;
@@ -120,7 +120,7 @@ var_local_list:
     var_local ',' var_local_list                { $$ = connect($1, $3); }
     | var_local                                 { $$ = $1; };
 var_local: 
-    TK_IDENTIFICADOR                                { free_unused_lex_val($1); $$ = NULL; }
+    TK_IDENTIFICADOR                                { free_lex_val($1); $$ = NULL; }
     | TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR    { $$ = createParentNode2Children(lexToNode($2), lexToNode($1), lexToNode($3)); }
     | TK_IDENTIFICADOR TK_OC_LE literal             { $$ = createParentNode2Children(lexToNode($2), lexToNode($1), $3); };
 
