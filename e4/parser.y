@@ -3,6 +3,7 @@
     #include <stdio.h>
     #include "yylvallib.h"
     #include "tree.h"
+    #include "types.h"
     int yylex(void);
     void yyerror (char const *s);
 %}
@@ -13,6 +14,7 @@
 %union{
 	struct lex_value_t* valor_lexico;
 	struct node* nodo;
+    int integer_constant;
 }
 
 %token<valor_lexico> TK_PR_INT
@@ -64,6 +66,8 @@
 %type<nodo> bit_and_or_eq eq_neq_or_compare compare_or_sum sum_sub_or_mult_div_or_pow mult_div_or_pow pow_or_op unary_expr operand unsigned_literal opt_unary_operator
 %type<nodo> func_call_parameter func_call_parameters_list
 
+%type<integer_constant> type;
+
 %%
 
 program: 
@@ -71,17 +75,22 @@ program:
     | program func          { createRoot($1, $2); $$ = $2; }
     | %empty                { $$ = NULL; };
 
-dec_var_global: static type var_global_list ';';
+dec_var_global: static type var_global_list ';'  { init_types_and_add_to_scope($2); };
 static: 
     TK_PR_STATIC 
     | %empty;
-type: TK_PR_INT | TK_PR_FLOAT | TK_PR_CHAR | TK_PR_BOOL | TK_PR_STRING;
+type: 
+    TK_PR_INT       { $$ = INT_T; }
+    | TK_PR_FLOAT   { $$ = FLOAT_T; }
+    | TK_PR_CHAR    { $$ = CHAR_T; }
+    | TK_PR_BOOL    { $$ = BOOL_T; }
+    | TK_PR_STRING  { $$ = STRING_T; };
 var_global_list: 
     var_global ',' var_global_list 
     | var_global;
 var_global: 
-    TK_IDENTIFICADOR                          { free_lex_val($1); }
-    | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { free_lex_val($1); free_lex_val($3); };
+    TK_IDENTIFICADOR                          { create_entry_missing_type($1); free_lex_val($1); }
+    | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { create_entry_vector_size_missing_type($1, $3); free_lex_val($1); free_lex_val($3); };
 
 func: static type TK_IDENTIFICADOR '('parameters')' '{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $8); };
 

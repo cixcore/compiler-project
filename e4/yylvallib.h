@@ -16,6 +16,7 @@
 #define LIT_STR   10
 
 int get_line_number();
+int get_col_number();
 
 union value_token {
   int integer;

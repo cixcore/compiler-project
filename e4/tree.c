@@ -5,6 +5,7 @@
 #include "tree.h"
 #include "parser.tab.h"
 #include "yylvallib.h"
+#include "types.h"
 
 void exporta(void *tree)
 {
@@ -108,6 +109,7 @@ void libera(void *tree)
 {
     struct node *treeRoot = (struct node *)tree;
     freeTheTreeeees(treeRoot);
+    clearTypeStructures();
 }
 void freeTheTreeeees(struct node *no)
 {
