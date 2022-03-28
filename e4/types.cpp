@@ -61,13 +61,17 @@ void create_entry_with_args(struct lex_value_t *identifier, int type, int nat, i
     new_c->col = get_col_number();
     new_c->type = type;
     new_c->nature = nat;
-    new_c->size = mult;
+    new_c->size = mult * bytes_of(type);
     new_c->token_value_data = identifier->token;
 
     validate_err_declared_symbol(*new_c, identifier->token.str, nat);
 
     for(auto iter = arguments_collector.begin(); iter != arguments_collector.end(); iter++) {
-        new_c->arguments.push_back((struct argument){.id = strdup(iter->id), .type = iter->type});
+        new_c->arguments.push_back((struct argument)
+            {.id = strdup(iter->id), 
+            .type = iter->type, 
+            .col = iter->col, 
+            .lin = iter->lin});
         free(iter->id);
     }
     arguments_collector.clear();
@@ -77,10 +81,31 @@ void create_entry_with_args(struct lex_value_t *identifier, int type, int nat, i
         scopes.push_front(new_table);
     }
     scopes.front().insert(entry(strdup(identifier->token.str), new_c));
+
+    // adiciona cada argumento como uma variável no escopo mais de cima da pilha
+    push_scope();
+    for(auto arg = new_c->arguments.begin(); arg != new_c->arguments.end(); arg++) {
+        struct symtable_content *arg_new_c = new symtable_content();
+        arg_new_c->lin = arg->lin;
+        arg_new_c->col = arg->col;
+        arg_new_c->type = arg->type;
+        arg_new_c->nature = VAR_N;
+        arg_new_c->size = mult * bytes_of(arg->type);
+        arg_new_c->token_value_data.str = strdup(arg->id);
+
+        validate_err_declared_symbol(*arg_new_c, arg_new_c->token_value_data.str, nat);
+
+        scopes.front().insert(entry(strdup(arg_new_c->token_value_data.str), arg_new_c));
+    }
 }
 
 void collect_arg(struct lex_value_t *identifier, int type) {
-    arguments_collector.push_back((struct argument){.id = strdup(identifier->token.str), .type = type});
+    arguments_collector.push_back((struct argument){
+        .id = strdup(identifier->token.str), 
+        .type = type, 
+        .col = get_col_number(), 
+        .lin = get_line_number()
+    });
 }
 
 void create_entry(struct lex_value_t *identifier, int type, int nat, int mult) {
@@ -121,7 +146,7 @@ void validate_err_declared_symbol(symtable_content content, char* symtable_key, 
     auto table_entry = scope.find(symtable_key);
 
     if(table_entry != scope.end()) {
-        printf("Redeclaration at ln %d,col %d: identifier '%s' (%s) is already in use at ln %d,col %d (%s).\n", 
+        printf("Redeclaration at ln %d, col %d: identifier '%s' (%s) is already in use at ln %d, col %d (%s).\n", 
         content.lin, content.col, symtable_key, nature_str(content.nature), table_entry->second->lin, table_entry->second->col, nature_str(table_entry->second->nature));
         exit(ERR_DECLARED);
     }    

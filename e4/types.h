@@ -27,6 +27,8 @@ using entry = std::pair<char*, struct symtable_content*>;
 struct argument {
     char* id;
     int type;
+    int col;
+    int lin;
 };
 
 struct symtable_content {
