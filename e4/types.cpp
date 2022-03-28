@@ -2,12 +2,13 @@
 #include "parser.tab.h"
 #include "yylvallib.h"
 #include "types.h"
+#include "errors.h"
 
 using namespace std;
 
 list<symbols_table> scopes;
 symbols_table undefined_type_entries;
-
+vector<argument> arguments_collector;
 
 void init_types_and_add_to_scope(int type) {
     for(auto it = undefined_type_entries.begin(); it!=undefined_type_entries.end(); ++it) {
@@ -53,6 +54,55 @@ symbols_table deepcopy_symbols_table() {
     free_undefs();
     return table;
 }
+
+void create_entry_with_args(struct lex_value_t *identifier, int type, int nat, int mult) {
+    struct symtable_content *new_c = new symtable_content();
+    new_c->lin = identifier->line;
+    new_c->col = get_col_number();
+    new_c->type = type;
+    new_c->nature = nat;
+    new_c->size = mult;
+    new_c->token_value_data = identifier->token;
+
+    validate_err_declared_symbol(*new_c, identifier->token.str, nat);
+
+    for(auto iter = arguments_collector.begin(); iter != arguments_collector.end(); iter++) {
+        new_c->arguments.push_back((struct argument){.id = strdup(iter->id), .type = iter->type});
+        free(iter->id);
+    }
+    arguments_collector.clear();
+
+    if(scopes.empty()) {
+        symbols_table new_table;
+        scopes.push_front(new_table);
+    }
+    scopes.front().insert(entry(strdup(identifier->token.str), new_c));
+}
+
+void collect_arg(struct lex_value_t *identifier, int type) {
+    arguments_collector.push_back((struct argument){.id = strdup(identifier->token.str), .type = type});
+}
+
+void create_entry(struct lex_value_t *identifier, int type, int nat, int mult) {
+    struct symtable_content *new_c = new symtable_content();
+    new_c->lin = identifier->line;
+    new_c->col = get_col_number();
+    new_c->type = type;
+    new_c->nature = nat;
+    new_c->size = mult;
+    new_c->token_value_data = identifier->token;
+
+    validate_err_declared_symbol(*new_c, identifier->token.str, nat);
+
+    scopes.front().insert(entry(strdup(identifier->token.str), new_c));
+}
+
+void id_entry_missing_type(struct lex_value_t *identifier) {
+    create_entry_missing_type(identifier, VAR_N, 1);
+}
+void vector_entry_missing_type(struct lex_value_t *identifier, struct lex_value_t *vec_size) {
+    create_entry_missing_type(identifier, VEC_N, vec_size->token.integer);
+}
 void create_entry_missing_type(struct lex_value_t *identifier, int nat, int mult) {
     struct symtable_content *new_c = new symtable_content();
     new_c->lin = identifier->line;
@@ -61,19 +111,29 @@ void create_entry_missing_type(struct lex_value_t *identifier, int nat, int mult
     new_c->size = mult;
     new_c->token_value_data = identifier->token;
 
+    validate_err_declared_symbol(*new_c, identifier->token.str, nat);
+
     undefined_type_entries.insert(entry(strdup(identifier->token.str), new_c));
 }
-void id_entry_missing_type(struct lex_value_t *identifier) {
-    create_entry_missing_type(identifier, VAR_N, 1);
-}
-void vector_entry_missing_type(struct lex_value_t *identifier, struct lex_value_t *vec_size) {
-    create_entry_missing_type(identifier, VEC_N, vec_size->token.integer);
+
+void validate_err_declared_symbol(symtable_content content, char* symtable_key, int nature) {
+    symbols_table scope = scopes.front();
+    auto table_entry = scope.find(symtable_key);
+
+    if(table_entry != scope.end()) {
+        printf("Redeclaration at ln %d,col %d: identifier '%s' (%s) is already in use at ln %d,col %d (%s).\n", 
+        content.lin, content.col, symtable_key, nature_str(content.nature), table_entry->second->lin, table_entry->second->col, nature_str(table_entry->second->nature));
+        exit(ERR_DECLARED);
+    }    
 }
 
-char* string_to_char_array(const char* str) {
-    char * charr;
-    strcpy(charr, str);
-    return strdup(charr);
+void pop_scope() {
+    free_symbols_table(scopes.front());
+    scopes.pop_front();
+}
+void push_scope() {
+    symbols_table new_scope;
+    scopes.push_front(new_scope);
 }
 
 int get_inferred_type(int type1, int type2) {
@@ -85,6 +145,54 @@ int get_inferred_type(int type1, int type2) {
     return -1;
 }
 
+void clearTypeStructures() {
+    for (auto itl = scopes.begin(); itl != scopes.end(); ++itl) {
+        free_symbols_table(*itl);
+    }
+    free_undefs();
+}
+void free_symbols_table(symbols_table table) {
+    for (auto itm = table.begin(); itm != table.end(); ++itm) {
+        free(itm->first);
+        free(itm->second);
+    }
+    table.clear();
+}
+void free_undefs() {
+    for (auto iter = undefined_type_entries.begin(); iter != undefined_type_entries.end(); ++iter) {
+        free(iter->first);
+        free(iter->second);
+    }
+}
+
+void print_scopes() {
+    cout << endl << "print scopes (size: " << scopes.size() << ")\n";
+    for (auto itl = scopes.begin(); itl != scopes.end(); ++itl) {
+        cout << "   > print table (size: " << itl->size() << ")\n";
+        for (auto itm = itl->begin(); itm != itl->end(); ++itm) {
+            cout << "       " << itm->first << " (size: " << itm->second->size << ") = ";
+            if(!(itm->second->arguments.empty())) {
+                for(auto ita = itm->second->arguments.begin(); ita != itm->second->arguments.end(); ++ita) {
+                    cout << "<";
+                    print_type(ita->type);
+                    cout << " " << ita->id;
+                    cout << "> ";
+                }
+                 cout << " -> ";
+            }
+            print_type(itm->second->type);
+            cout << endl;
+        }
+    }
+}
+void print_undef() {
+    cout << "print print_undef (size: " << undefined_type_entries.size() << ")\n";
+    for (auto itm = undefined_type_entries.begin(); itm != undefined_type_entries.end(); ++itm) {
+        cout << "       " << itm->first << "(type: ";
+        print_type(itm->second->type);
+        cout << " | size: " << itm->second->size << ")\n";
+    }
+}
 void print_type(int type) {
     switch (type) {
         case INT_T:
@@ -108,41 +216,22 @@ void print_type(int type) {
     }
 }
 
-void clearTypeStructures() {
-    for (auto itl = scopes.begin(); itl != scopes.end(); ++itl) {
-        for (auto itm = undefined_type_entries.begin(); itm != undefined_type_entries.end(); ++itm) {
-            free(itm->first);
-            free(itm->second->token_value_data.str);
-            free(itm->second);
-        }
-    }
-    free_undefs();
-}
-
-void free_undefs() {
-    for (auto iter = undefined_type_entries.begin(); iter != undefined_type_entries.end(); ++iter) {
-        free(iter->first);
-        free(iter->second);
+char* nature_str(int nature) {
+    switch (nature) {
+        case VAR_N:
+            return string_to_char_array("VAR");
+        case VEC_N:
+            return string_to_char_array("VECTOR");
+        case FUNC_N:
+            return string_to_char_array("FUNCTION");
+        case LIT_N:
+            return string_to_char_array("LITERAL");
+        default:
+            return string_to_char_array("");
     }
 }
-
-void print_scopes() {
-    cout << endl << "print scopes (size: " << scopes.size() << ")\n";
-    for (auto itl = scopes.begin(); itl != scopes.end(); ++itl) {
-        cout << "   > print table (size: " << itl->size() << ")\n";
-        for (auto itm = itl->begin(); itm != itl->end(); ++itm) {
-            cout << "       " << itm->first << "(type: ";
-            print_type(itm->second->type);
-            cout << " | size: " << itm->second->size << ")\n";
-        }
-    }
-}
-
-void print_undef() {
-    cout << "print print_undef (size: " << undefined_type_entries.size() << ")\n";
-    for (auto itm = undefined_type_entries.begin(); itm != undefined_type_entries.end(); ++itm) {
-        cout << "       " << itm->first << "(type: ";
-        print_type(itm->second->type);
-        cout << " | size: " << itm->second->size << ")\n";
-    }
+char* string_to_char_array(const char* str) {
+    char * charr;
+    strcpy(charr, str);
+    return strdup(charr);
 }

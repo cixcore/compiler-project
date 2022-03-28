@@ -92,7 +92,7 @@ var_global:
     TK_IDENTIFICADOR                          { id_entry_missing_type($1); free_lex_val($1); }
     | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { vector_entry_missing_type($1, $3); free_lex_val($1); free_lex_val($3); };
 
-func: static type TK_IDENTIFICADOR '('parameters')' '{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $8); };
+func: static type TK_IDENTIFICADOR '('parameters')' '{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $8); push_scope(); create_entry_with_args($3, $2, FUNC_N, bytes_of($2)); pop_scope(); };
 
 parameters: 
     parameters_list 
@@ -100,7 +100,7 @@ parameters:
 parameters_list: 
     parameter ',' parameters_list 
     | parameter;
-parameter: const type TK_IDENTIFICADOR  { free_lex_val($3); };
+parameter: const type TK_IDENTIFICADOR  { collect_arg($3, $2); free_lex_val($3); };
 const: 
     TK_PR_CONST 
     | %empty;
