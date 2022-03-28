@@ -30,4 +30,4 @@ struct node* createNLeaf(struct lex_value_t* lex_value);
 struct node* createFuncCallNode(struct lex_value_t* lex_value);
 
 struct lex_value_t* lexValueFromSC(char schar);
-struct lex_value_t* lexValueFromOC(char* schar);
+struct lex_value_t* lexValueFromOC(const char* schar);

@@ -232,7 +232,7 @@ struct lex_value_t *lexValueFromSC(char schar)
 
     return lexValue;
 }
-struct lex_value_t *lexValueFromOC(char *schar)
+struct lex_value_t *lexValueFromOC(const char *schar)
 {
     struct lex_value_t* lexValue = (struct lex_value_t *)malloc(sizeof(struct lex_value_t));
     lexValue->line = get_line_number();
