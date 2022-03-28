@@ -16,8 +16,8 @@
 #define CHAR_SIZE_BYTES     1
 #define BOOL_SIZE_BYTES     1
 
-using symbols_table = std::map<const char*, struct symtable_content*>;
-using entry = std::pair<const char*, struct symtable_content*>;
+using symbols_table = std::map<char*, struct symtable_content*>;
+using entry = std::pair<char*, struct symtable_content*>;
 
 struct argument {
     char* id;
@@ -36,11 +36,14 @@ struct symtable_content {
 
 void init_types_and_add_to_scope(int type);
 int bytes_of(int type);
-void create_entry_missing_type(struct lex_value_t *identifier);
-void create_entry_vector_size_missing_type(struct lex_value_t *identifier, struct lex_value_t *vec_size);
+void id_entry_missing_type(struct lex_value_t *identifier);
+void vector_entry_missing_type(struct lex_value_t *identifier, struct lex_value_t *vec_size);
 
 int get_inferred_type(int type1, int type2);
-const char* int_to_symtable_key(int value);
-const char* float_to_symtable_key(float value);
+char* string_to_char_array(const char* str);
 
 void clearTypeStructures();
+symbols_table deepcopy_symbols_table();
+void free_undefs();
+void print_scopes();
+void print_undef();

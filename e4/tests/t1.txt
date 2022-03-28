@@ -1,4 +1,5 @@
-static int um, dois;
+static int um, dois[3];
+string tres, quatro, um;
 static int func (){
 	a = c && b;
 	exp = f(a,b) > 10 ? g('a') : **a;

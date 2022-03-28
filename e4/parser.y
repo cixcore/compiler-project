@@ -89,8 +89,8 @@ var_global_list:
     var_global ',' var_global_list 
     | var_global;
 var_global: 
-    TK_IDENTIFICADOR                          { create_entry_missing_type($1); free_lex_val($1); }
-    | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { create_entry_vector_size_missing_type($1, $3); free_lex_val($1); free_lex_val($3); };
+    TK_IDENTIFICADOR                          { id_entry_missing_type($1); free_lex_val($1); }
+    | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { vector_entry_missing_type($1, $3); free_lex_val($1); free_lex_val($3); };
 
 func: static type TK_IDENTIFICADOR '('parameters')' '{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $8); };
 

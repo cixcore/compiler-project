@@ -3,6 +3,7 @@
 
 
 struct node{
+    int type;
     struct lex_value_t* value;
     struct node* children[MAX_CHILDREN];
     struct node* next;
