@@ -1,6 +1,7 @@
 /* Grupo H - Carlos Morvan Santiago, Maria Cecília Corrêa */
 #include "parser.tab.h"
 #include "yylvallib.h"
+#include "tree.h"
 #include "types.h"
 #include "errors.h"
 
@@ -10,10 +11,34 @@ list<symbols_table> scopes;
 symbols_table undefined_type_entries;
 vector<argument> arguments_collector;
 
-void init_types_and_add_to_scope(int type) {
+int expected_ret_type;
+
+void local_init_types_validate_and_add_to_scope(int type) {
+    for(auto it = undefined_type_entries.begin(); it!=undefined_type_entries.end(); ++it) {
+        if(type > UND_T) {
+            it->second->type = get_inferred_type_validate_char_string(type, it->second->type, *(it->second));
+        } else {
+            it->second->type = type;
+        }
+        it->second->size *= bytes_of(it->second->type);
+    }
+    symbols_table deepcopy_table = deepcopy_symbols_table();
+    if(scopes.empty()) {
+        scopes.push_front(deepcopy_table);
+    } else {
+        scopes.front().insert(deepcopy_table.begin(), deepcopy_table.end());
+    }
+    undefined_type_entries.clear();
+}
+void global_init_types_and_add_to_scope(int type) {
     for(auto it = undefined_type_entries.begin(); it!=undefined_type_entries.end(); ++it) {
         it->second->type = type;
-        it->second->size *= bytes_of(type);
+        if(type == STRING_T) {
+            it->second->size *= 0;
+            validate_not_string_vector(type, it->second->nature, *(it->second), it->first);
+        } else {
+            it->second->size *= bytes_of(type);
+        }
     }
     symbols_table deepcopy_table = deepcopy_symbols_table();
     if(scopes.empty()) {
@@ -33,6 +58,8 @@ int bytes_of(int type) {
             return CHAR_SIZE_BYTES;  
         case BOOL_T: 
             return BOOL_SIZE_BYTES;
+        case STRING_T: 
+            return CHAR_SIZE_BYTES;
         
         default: return -1;
     };
@@ -55,14 +82,19 @@ symbols_table deepcopy_symbols_table() {
     return table;
 }
 
-void create_entry_with_args(struct lex_value_t *identifier, int type, int nat, int mult) {
+void create_func_entry_with_args(struct lex_value_t *identifier, int type, int nat) {
+
+    validate_err_function_string(type, identifier->line, get_col_number());
+
     struct symtable_content *new_c = new symtable_content();
     new_c->lin = identifier->line;
     new_c->col = get_col_number();
     new_c->type = type;
     new_c->nature = nat;
-    new_c->size = mult * bytes_of(type);
+    new_c->size = type != STRING_T ? bytes_of(type) : 0;
     new_c->token_value_data = identifier->token;
+
+    expected_ret_type = type;
 
     validate_err_declared_symbol(*new_c, identifier->token.str, nat);
 
@@ -90,7 +122,7 @@ void create_entry_with_args(struct lex_value_t *identifier, int type, int nat, i
         arg_new_c->col = arg->col;
         arg_new_c->type = arg->type;
         arg_new_c->nature = VAR_N;
-        arg_new_c->size = mult * bytes_of(arg->type);
+        arg_new_c->size = arg->type != STRING_T ? bytes_of(arg->type) : 0;
         arg_new_c->token_value_data.str = strdup(arg->id);
 
         validate_err_declared_symbol(*arg_new_c, arg_new_c->token_value_data.str, nat);
@@ -100,6 +132,8 @@ void create_entry_with_args(struct lex_value_t *identifier, int type, int nat, i
 }
 
 void collect_arg(struct lex_value_t *identifier, int type) {
+    validate_err_function_string(type, get_line_number(), get_col_number());
+
     arguments_collector.push_back((struct argument){
         .id = strdup(identifier->token.str), 
         .type = type, 
@@ -108,37 +142,57 @@ void collect_arg(struct lex_value_t *identifier, int type) {
     });
 }
 
-void create_entry(struct lex_value_t *identifier, int type, int nat, int mult) {
-    struct symtable_content *new_c = new symtable_content();
-    new_c->lin = identifier->line;
-    new_c->col = get_col_number();
-    new_c->type = type;
-    new_c->nature = nat;
-    new_c->size = mult;
-    new_c->token_value_data = identifier->token;
-
-    validate_err_declared_symbol(*new_c, identifier->token.str, nat);
-
-    scopes.front().insert(entry(strdup(identifier->token.str), new_c));
+void declare_id_entry_missing_type(struct lex_value_t *identifier) {
+    declare_entry_missing_type(identifier, VAR_N, 1);
 }
-
-void id_entry_missing_type(struct lex_value_t *identifier) {
-    create_entry_missing_type(identifier, VAR_N, 1);
+void declare_vector_entry_missing_type(struct lex_value_t *identifier, struct lex_value_t *vec_size) {
+    declare_entry_missing_type(identifier, VEC_N, vec_size->token.integer);
 }
-void vector_entry_missing_type(struct lex_value_t *identifier, struct lex_value_t *vec_size) {
-    create_entry_missing_type(identifier, VEC_N, vec_size->token.integer);
-}
-void create_entry_missing_type(struct lex_value_t *identifier, int nat, int mult) {
+void declare_entry_missing_type(struct lex_value_t *identifier, int nat, int mult) {
     struct symtable_content *new_c = new symtable_content();
     new_c->lin = identifier->line;
     new_c->col = get_col_number();
     new_c->nature = nat;
+    new_c->type = UND_T;
     new_c->size = mult;
     new_c->token_value_data = identifier->token;
 
     validate_err_declared_symbol(*new_c, identifier->token.str, nat);
 
     undefined_type_entries.insert(entry(strdup(identifier->token.str), new_c));
+}
+
+void declare_id_entry_missing_type_init_id(struct lex_value_t *id_to_add, struct lex_value_t *id_init) {
+
+    int type = get_type_or_err_undeclared_symbol(*id_init, VAR_N);
+    int init_size = 0;
+    if(type == STRING_T) init_size = size_of(*id_init);
+
+    struct symtable_content *new_c = new symtable_content();
+    new_c->lin = id_to_add->line;
+    new_c->col = get_col_number();
+    new_c->type = type;
+    new_c->nature = VAR_N;
+    new_c->size = type == STRING_T && init_size > 0 ? init_size : 0;
+    new_c->token_value_data = id_to_add->token;
+
+    validate_err_declared_symbol(*new_c, id_to_add->token.str, VAR_N);
+
+    undefined_type_entries.insert(entry(strdup(id_to_add->token.str), new_c));
+
+}
+void declare_id_entry_missing_type_init_lit(struct lex_value_t *id_to_add, struct node *lit_init) {
+    struct symtable_content *new_c = new symtable_content();
+    new_c->lin = id_to_add->line;
+    new_c->col = get_col_number();
+    new_c->type = lit_init->type;
+    new_c->nature = VAR_N;
+    new_c->size = lit_init->type == STRING_T ? sizeof(lit_init->value->token.str) : 1;
+    new_c->token_value_data = id_to_add->token;
+
+    validate_err_declared_symbol(*new_c, id_to_add->token.str, VAR_N);
+
+    undefined_type_entries.insert(entry(strdup(id_to_add->token.str), new_c));
 }
 
 void validate_err_declared_symbol(symtable_content content, char* symtable_key, int nature) {
@@ -148,8 +202,70 @@ void validate_err_declared_symbol(symtable_content content, char* symtable_key, 
     if(table_entry != scope.end()) {
         printf("Redeclaration at ln %d, col %d: identifier '%s' (%s) is already in use at ln %d, col %d (%s).\n", 
         content.lin, content.col, symtable_key, nature_str(content.nature), table_entry->second->lin, table_entry->second->col, nature_str(table_entry->second->nature));
+        printf("program exit code (%d).", ERR_DECLARED);
         exit(ERR_DECLARED);
     }    
+}
+int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature) {
+    for(auto scope = scopes.begin(); scope != scopes.end(); scope++) {
+
+        auto table_entry = scope->find(id_init.token.str);
+        if(table_entry != scope->end()) {
+            validate_nature(nature, table_entry->second->nature, id_init.line);
+            return table_entry->second->type;
+        }  
+    }
+
+    auto table_entry = undefined_type_entries.find(id_init.token.str);
+    if(table_entry != undefined_type_entries.end()) { 
+        // significa que a variável utilizada ainda não foi declarada na tablela de simbolos, 
+        // mas esta sendo declarada junto com a variavel que está sendo utilizada para inicializar
+        return UND_T;
+    }
+
+    printf("Attempt to initialize var with unknown identifier '%s' at line %d.\n", id_init.token.str, id_init.line);
+    printf("program exit code (%d).", ERR_UNDECLARED);
+    exit(ERR_UNDECLARED);  
+}
+int size_of(struct lex_value_t id_init) {
+    for(auto scope = scopes.begin(); scope != scopes.end(); scope++) {
+
+        auto table_entry = scope->find(id_init.token.str);
+        if(table_entry != scope->end()) {
+            return table_entry->second->type;
+        }  
+    }
+
+    return 0; 
+}
+void validate_nature(int expected_n, int actual_n, int line) {
+    if(expected_n == VAR_N && (actual_n == VEC_N || actual_n == FUNC_N)) {
+        printf("Attempt to use VAR as '%s' at ln %d.\n", nature_str(actual_n), line);
+        printf("program exit code (%d).", ERR_VARIABLE);
+        exit(ERR_VARIABLE);  
+    } if(expected_n == VEC_N && (actual_n == VAR_N || actual_n == FUNC_N)) {
+        printf("Attempt to use VEC as '%s' at ln %d.\n", nature_str(actual_n), line);
+        printf("program exit code (%d).", ERR_VECTOR);
+        exit(ERR_VECTOR);  
+    } if(expected_n == FUNC_N && (actual_n == VAR_N || actual_n == VEC_N)) {
+        printf("Attempt to use FUNC as '%s' at ln %d.\n", nature_str(actual_n), line);
+        printf("program exit code (%d).", ERR_FUNCTION);
+        exit(ERR_FUNCTION);  
+    }
+}
+void validate_not_string_vector(int type, int nature, symtable_content content, char* symtable_key) {
+    if(type == STRING_T && nature == VEC_N) {
+        printf("Attempt to declare '%s' as a vector of type string at ln %d, col %d. String type does not support vectors.\n", symtable_key, content.lin, content.col);
+        printf("program exit code (%d).", ERR_STRING_VECTOR);
+        exit(ERR_STRING_VECTOR);
+    }    
+}
+void validate_err_function_string(int type, int line, int col) {
+    if(type == STRING_T) {
+        printf("Error ln %d, col %d: type of the return or parameters of a function cannot be <string>.\n", line, col);
+        printf("program exit code (%d).", ERR_FUNCTION_STRING);
+        exit(ERR_FUNCTION_STRING); 
+    }
 }
 
 void pop_scope() {
@@ -161,13 +277,24 @@ void push_scope() {
     scopes.push_front(new_scope);
 }
 
-int get_inferred_type(int type1, int type2) {
+int get_inferred_type_validate_char_string(int type1, int type2, symtable_content content) {
     if(type1 == type2) return type1;
     if((type1 == INT_T && type2 == FLOAT_T) || (type2 == INT_T && type1 == FLOAT_T)) return FLOAT_T;
     if((type1 == INT_T && type2 == BOOL_T) || (type2 == INT_T && type1 == BOOL_T)) return INT_T;
     if((type1 == FLOAT_T && type2 == BOOL_T) || (type2 == FLOAT_T && type1 == BOOL_T)) return FLOAT_T;
 
-    return -1;
+    if(type1 == CHAR_T) {
+        printf("Attempt to coerce variable of type <char> to type <%s> at ln %d, col %d.\n", type_str(type2), content.lin, content.col);
+        printf("program exit code (%d).", ERR_CHAR_TO_X);
+        exit(ERR_CHAR_TO_X);
+    }
+    if(type1 == STRING_T) {
+        printf("Attempt to coerce variable of type <string> to type <%s> at ln %d, col %d.\n", type_str(type2), content.lin, content.col);
+        printf("program exit code (%d).", ERR_STRING_TO_X);
+        exit(ERR_STRING_TO_X);
+    }
+
+    return UND_T;
 }
 
 void clearTypeStructures() {
@@ -198,49 +325,39 @@ void print_scopes() {
             cout << "       " << itm->first << " (size: " << itm->second->size << ") = ";
             if(!(itm->second->arguments.empty())) {
                 for(auto ita = itm->second->arguments.begin(); ita != itm->second->arguments.end(); ++ita) {
-                    cout << "<";
-                    print_type(ita->type);
-                    cout << " " << ita->id;
-                    cout << "> ";
+                    cout << "<" << type_str(ita->type) << " " << ita->id << "> ";
                 }
                  cout << " -> ";
             }
-            print_type(itm->second->type);
-            cout << endl;
+            cout << type_str(itm->second->type) << endl;
         }
     }
 }
 void print_undef() {
     cout << "print print_undef (size: " << undefined_type_entries.size() << ")\n";
     for (auto itm = undefined_type_entries.begin(); itm != undefined_type_entries.end(); ++itm) {
-        cout << "       " << itm->first << "(type: ";
-        print_type(itm->second->type);
+        cout << "       " << itm->first << "(type: " << type_str(itm->second->type);
         cout << " | size: " << itm->second->size << ")\n";
     }
 }
-void print_type(int type) {
+
+char* type_str(int type) {
     switch (type) {
         case INT_T:
-            printf("int");
-            break;
+            return string_to_char_array("int");
         case BOOL_T:
-            printf("bool");
-            break;
+            return string_to_char_array("bool");
         case FLOAT_T:
-            printf("float");
-            break;
+            return string_to_char_array("float");
         case CHAR_T:
-            printf("char");
-            break;
+            return string_to_char_array("char");
         case STRING_T:
-            printf("string");
-            break;
+            return string_to_char_array("string");
         
         default:
-            break;
+            return string_to_char_array("");;
     }
 }
-
 char* nature_str(int nature) {
     switch (nature) {
         case VAR_N:
