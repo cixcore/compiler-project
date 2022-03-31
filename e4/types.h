@@ -57,6 +57,7 @@ void validate_err_declared_symbol(symtable_content content, char* symtable_key, 
 int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature);
 void validate_not_string_vector(int type, int nature, symtable_content content, char* symtable_key);
 void validate_nature(int expected_n, int actual_n, int line);
+void validate_size(symtable_content content_max, symtable_content content_received);
 void validate_err_function_string(int type, int line, int col);
 symtable_content* validate_attr_id(char* symtable_key, int line, int col);
 void validate_attr_expr(lex_value_t* id, struct node* expr);

@@ -80,11 +80,11 @@ static:
     TK_PR_STATIC 
     | %empty;
 type: 
-    TK_PR_INT       { printf("%d\n", INT_T); $$ = INT_T; }
-    | TK_PR_FLOAT   { printf("%d\n", FLOAT_T);$$ = FLOAT_T; }
-    | TK_PR_CHAR    { printf("%d\n", CHAR_T);$$ = CHAR_T; }
-    | TK_PR_BOOL    { printf("%d\n", BOOL_T);$$ = BOOL_T; }
-    | TK_PR_STRING  { printf("%d\n", STRING_T);$$ = STRING_T; };
+    TK_PR_INT       { $$ = INT_T; }
+    | TK_PR_FLOAT   { $$ = FLOAT_T; }
+    | TK_PR_CHAR    { $$ = CHAR_T; }
+    | TK_PR_BOOL    { $$ = BOOL_T; }
+    | TK_PR_STRING  { $$ = STRING_T; };
 var_global_list: 
     var_global ',' var_global_list 
     | var_global;
@@ -147,7 +147,7 @@ literal:
 
 
 attr: 
-    TK_IDENTIFICADOR '=' expr                   { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), lexToNode($1), $3); }
+    TK_IDENTIFICADOR '=' expr                   { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), lexToNode($1), $3); validate_attr_expr($1, $3); }
     | TK_IDENTIFICADOR'[' expr ']' '=' expr     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), createParentNode2Children(lexToNode(lexValueFromOC("[]")), lexToNode($1), $3), $6); };
 
 input:  TK_PR_INPUT TK_IDENTIFICADOR     { $$ = createParentNode1Child(lexToNode($1), createLeaf($2)); };

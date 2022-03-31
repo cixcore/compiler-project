@@ -239,13 +239,28 @@ symtable_content* validate_attr_id(char* symtable_key, int line, int col)
 
 void validate_attr_expr(lex_value_t* id, struct node* expr)
 {
-    symtable_content* content = validate_attr_id(id->token.str, id->line, get_col_number());
-    if(content->type != expr->type && (content->type == CHAR_T || content->type == STRING_T || expr->type == CHAR_T || expr->type == STRING_T))
-    {
-        cout << "Attempt to attribute variable of type <";print_type_str(content->type);cout<<"> to type <";print_type_str(expr->type);cout <<"> at ln "<<content->lin<<", col "<<content->col<<".\n";
-        printf("program exit code (%d).", ERR_WRONG_TYPE);
-        exit(ERR_WRONG_TYPE);
+    symtable_content* id_content = validate_attr_id(id->token.str, id->line, get_col_number());
+
+    if(expr->value->type == ID) {
+        symtable_content* expr_content = validate_attr_id(expr->value->token.str, expr->value->line, get_col_number());
+        if(id_content->type != expr_content->type && (id_content->type == CHAR_T || id_content->type == STRING_T || expr_content->type == CHAR_T || expr_content->type == STRING_T))
+        {
+            cout << "Attempt to attribute variable of type <";print_type_str(id_content->type);cout<<"> to type <";print_type_str(expr_content->type);
+            cout <<"> at ln "<<id_content->lin<<", col "<<id_content->col<<".\n";
+            printf("program exit code (%d).", ERR_WRONG_TYPE);
+            exit(ERR_WRONG_TYPE);
+        }
+        validate_nature(id_content->nature, expr_content->nature, id_content->lin);
+        validate_size(*id_content, *expr_content);
     }
+
+    if(expr->value->type == OC && strcmp(expr->value->token.str, "[]") == 0) {
+        // significa que é um acessoa  vetor, o primeiro filho é o identificador utilizado
+        symtable_content* expr_content = validate_attr_id(expr->children[0]->value->token.str, expr->value->line, get_col_number());
+        validate_nature(id_content->nature, VAR_N, id_content->lin);
+        // não valida tamanho pois não existe vetor de string, e os outros tipos podem ser convertidos e já foram validados
+    }
+
 }
 
 int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature) {
@@ -293,6 +308,15 @@ void validate_nature(int expected_n, int actual_n, int line) {
         cout << "Attempt to use FUNC as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
         printf("program exit code (%d).", ERR_FUNCTION);
         exit(ERR_FUNCTION);  
+    }
+}
+void validate_size(symtable_content content_max, symtable_content content_received) {
+    if(content_max.size < content_received.size)
+    {
+        cout << "Attempt to initialize variable '"<<content_max.token_value_data.str<<"' with content exceedind its maximum bytes size ("<<content_max.size<<") ";
+        cout<<"' at ln " << content_max.lin << ", col " << content_max.col << ".\n";
+        printf("program exit code (%d).", ERR_STRING_MAX);
+        exit(ERR_STRING_MAX);  
     }
 }
 void validate_not_string_vector(int type, int nature, symtable_content content, char* symtable_key) {

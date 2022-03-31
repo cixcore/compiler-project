@@ -1,0 +1,5 @@
+int jj[4];
+static int func (int a){
+	int kk;
+	kk = jj;
+}
