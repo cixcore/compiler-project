@@ -15,7 +15,7 @@ int expected_ret_type;
 
 void local_init_types_validate_and_add_to_scope(int type) {
     for(auto it = undefined_type_entries.begin(); it!=undefined_type_entries.end(); ++it) {
-        if(type > UND_T) {
+        if(it->second->type > UND_T) {
             it->second->type = get_inferred_type_validate_char_string(type, it->second->type, *(it->second));
         } else {
             it->second->type = type;
@@ -26,28 +26,40 @@ void local_init_types_validate_and_add_to_scope(int type) {
     if(scopes.empty()) {
         scopes.push_front(deepcopy_table);
     } else {
+        cout << "scopesize: " << scopes.size();
+        print_scopes();
         scopes.front().insert(deepcopy_table.begin(), deepcopy_table.end());
     }
     undefined_type_entries.clear();
 }
-void global_init_types_and_add_to_scope(int type) {
-    for(auto it = undefined_type_entries.begin(); it!=undefined_type_entries.end(); ++it) {
+void global_init_types_and_add_to_scope(int type) 
+{
+    for(auto it = undefined_type_entries.begin(); it!=undefined_type_entries.end(); ++it) 
+    {
         it->second->type = type;
-        if(type == STRING_T) {
+        if(type == STRING_T) 
+        {
             it->second->size *= 0;
             validate_not_string_vector(type, it->second->nature, *(it->second), it->first);
-        } else {
+        } 
+        else 
+        {
             it->second->size *= bytes_of(type);
         }
     }
+
     symbols_table deepcopy_table = deepcopy_symbols_table();
-    if(scopes.empty()) {
+    if(scopes.empty())
+    {
         scopes.push_front(deepcopy_table);
-    } else {
+    }
+    else
+    {
         scopes.front().insert(deepcopy_table.begin(), deepcopy_table.end());
     }
     undefined_type_entries.clear();
 }
+
 int bytes_of(int type) {
     switch (type) {
         case INT_T: 
@@ -142,10 +154,12 @@ void collect_arg(struct lex_value_t *identifier, int type) {
     });
 }
 
-void declare_id_entry_missing_type(struct lex_value_t *identifier) {
+void declare_id_entry_missing_type(struct lex_value_t *identifier)
+{
     declare_entry_missing_type(identifier, VAR_N, 1);
 }
-void declare_vector_entry_missing_type(struct lex_value_t *identifier, struct lex_value_t *vec_size) {
+void declare_vector_entry_missing_type(struct lex_value_t *identifier, struct lex_value_t *vec_size)
+{
     declare_entry_missing_type(identifier, VEC_N, vec_size->token.integer);
 }
 void declare_entry_missing_type(struct lex_value_t *identifier, int nat, int mult) {
@@ -187,8 +201,10 @@ void declare_id_entry_missing_type_init_lit(struct lex_value_t *id_to_add, struc
     new_c->col = get_col_number();
     new_c->type = lit_init->type;
     new_c->nature = VAR_N;
-    new_c->size = lit_init->type == STRING_T ? sizeof(lit_init->value->token.str) : 1;
+    new_c->size = lit_init->type == STRING_T ? strlen(lit_init->value->token.str) : 1;
     new_c->token_value_data = id_to_add->token;
+
+    cout << lit_init->value->token.str << " " << new_c->size <<endl;
 
     validate_err_declared_symbol(*new_c, id_to_add->token.str, VAR_N);
 
@@ -200,12 +216,38 @@ void validate_err_declared_symbol(symtable_content content, char* symtable_key, 
     auto table_entry = scope.find(symtable_key);
 
     if(table_entry != scope.end()) {
-        printf("Redeclaration at ln %d, col %d: identifier '%s' (%s) is already in use at ln %d, col %d (%s).\n", 
-        content.lin, content.col, symtable_key, nature_str(content.nature), table_entry->second->lin, table_entry->second->col, nature_str(table_entry->second->nature));
+        cout << "Redeclaration at ln "<<content.lin<<", col "<<content.col<<": identifier '"<<symtable_key<<"' (";
+        print_nature_str(content.nature); cout<<") is already in use at ln "<<table_entry->second->lin<<", col "<<table_entry->second->col<<" (";
+        print_nature_str(table_entry->second->nature); cout<<").\n";
         printf("program exit code (%d).", ERR_DECLARED);
         exit(ERR_DECLARED);
     }    
 }
+
+symtable_content* validate_attr_id(char* symtable_key, int line, int col)
+{
+    for(auto scope = scopes.begin(); scope!= scopes.end(); scope++) {
+        auto table_entry = scope->find(symtable_key);
+        if(table_entry!= scope->end()) {
+            return table_entry->second;
+        }
+    }
+    cout << "Undeclared variable at ln "<<line<<", col "<<col<<": identifier '"<<symtable_key<<"'" << endl;    
+    printf("program exit code (%d).", ERR_UNDECLARED);
+    exit(ERR_UNDECLARED); 
+}
+
+void validate_attr_expr(lex_value_t* id, struct node* expr)
+{
+    symtable_content* content = validate_attr_id(id->token.str, id->line, get_col_number());
+    if(content->type != expr->type && (content->type == CHAR_T || content->type == STRING_T || expr->type == CHAR_T || expr->type == STRING_T))
+    {
+        cout << "Attempt to attribute variable of type <";print_type_str(content->type);cout<<"> to type <";print_type_str(expr->type);cout <<"> at ln "<<content->lin<<", col "<<content->col<<".\n";
+        printf("program exit code (%d).", ERR_WRONG_TYPE);
+        exit(ERR_WRONG_TYPE);
+    }
+}
+
 int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature) {
     for(auto scope = scopes.begin(); scope != scopes.end(); scope++) {
 
@@ -228,11 +270,11 @@ int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature) {
     exit(ERR_UNDECLARED);  
 }
 int size_of(struct lex_value_t id_init) {
-    for(auto scope = scopes.begin(); scope != scopes.end(); scope++) {
-
+    for(auto scope = scopes.begin(); scope != scopes.end(); scope++)
+    {
         auto table_entry = scope->find(id_init.token.str);
         if(table_entry != scope->end()) {
-            return table_entry->second->type;
+            return table_entry->second->size;
         }  
     }
 
@@ -240,15 +282,15 @@ int size_of(struct lex_value_t id_init) {
 }
 void validate_nature(int expected_n, int actual_n, int line) {
     if(expected_n == VAR_N && (actual_n == VEC_N || actual_n == FUNC_N)) {
-        printf("Attempt to use VAR as '%s' at ln %d.\n", nature_str(actual_n), line);
+        cout << "Attempt to use VAR as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
         printf("program exit code (%d).", ERR_VARIABLE);
         exit(ERR_VARIABLE);  
     } if(expected_n == VEC_N && (actual_n == VAR_N || actual_n == FUNC_N)) {
-        printf("Attempt to use VEC as '%s' at ln %d.\n", nature_str(actual_n), line);
+        cout << "Attempt to use VEC as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
         printf("program exit code (%d).", ERR_VECTOR);
         exit(ERR_VECTOR);  
     } if(expected_n == FUNC_N && (actual_n == VAR_N || actual_n == VEC_N)) {
-        printf("Attempt to use FUNC as '%s' at ln %d.\n", nature_str(actual_n), line);
+        cout << "Attempt to use FUNC as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
         printf("program exit code (%d).", ERR_FUNCTION);
         exit(ERR_FUNCTION);  
     }
@@ -261,6 +303,7 @@ void validate_not_string_vector(int type, int nature, symtable_content content, 
     }    
 }
 void validate_err_function_string(int type, int line, int col) {
+    
     if(type == STRING_T) {
         printf("Error ln %d, col %d: type of the return or parameters of a function cannot be <string>.\n", line, col);
         printf("program exit code (%d).", ERR_FUNCTION_STRING);
@@ -284,12 +327,12 @@ int get_inferred_type_validate_char_string(int type1, int type2, symtable_conten
     if((type1 == FLOAT_T && type2 == BOOL_T) || (type2 == FLOAT_T && type1 == BOOL_T)) return FLOAT_T;
 
     if(type1 == CHAR_T) {
-        printf("Attempt to coerce variable of type <char> to type <%s> at ln %d, col %d.\n", type_str(type2), content.lin, content.col);
+        cout << "Attempt to coerce variable of type <char> to type <";print_type_str(type2);cout <<"> at ln "<<content.lin<<", col "<<content.col<<".\n";
         printf("program exit code (%d).", ERR_CHAR_TO_X);
         exit(ERR_CHAR_TO_X);
     }
     if(type1 == STRING_T) {
-        printf("Attempt to coerce variable of type <string> to type <%s> at ln %d, col %d.\n", type_str(type2), content.lin, content.col);
+        cout << "Attempt to coerce variable of type <string> to type <";print_type_str(type2);cout <<"> at ln "<<content.lin<<", col "<<content.col<<".\n";
         printf("program exit code (%d).", ERR_STRING_TO_X);
         exit(ERR_STRING_TO_X);
     }
@@ -325,22 +368,22 @@ void print_scopes() {
             cout << "       " << itm->first << " (size: " << itm->second->size << ") = ";
             if(!(itm->second->arguments.empty())) {
                 for(auto ita = itm->second->arguments.begin(); ita != itm->second->arguments.end(); ++ita) {
-                    cout << "<" << type_str(ita->type) << " " << ita->id << "> ";
+                    cout << "<";print_type_str(ita->type); cout << " " << ita->id << "> ";
                 }
                  cout << " -> ";
             }
-            cout << type_str(itm->second->type) << endl;
+            print_type_str(itm->second->type); cout << endl;
         }
     }
 }
 void print_undef() {
     cout << "print print_undef (size: " << undefined_type_entries.size() << ")\n";
     for (auto itm = undefined_type_entries.begin(); itm != undefined_type_entries.end(); ++itm) {
-        cout << "       " << itm->first << "(type: " << type_str(itm->second->type);
+        //cout << "       " << itm->first << "(type: type_str(itm->second->type)";
         cout << " | size: " << itm->second->size << ")\n";
     }
 }
-
+/*
 char* type_str(int type) {
     switch (type) {
         case INT_T:
@@ -355,8 +398,13 @@ char* type_str(int type) {
             return string_to_char_array("string");
         
         default:
-            return string_to_char_array("");;
+            return string_to_char_array("undefined");
     }
+}
+char* string_to_char_array(const char* str) {
+    char * charr;
+    strcpy(charr, str);
+    return strdup(charr);
 }
 char* nature_str(int nature) {
     switch (nature) {
@@ -372,8 +420,47 @@ char* nature_str(int nature) {
             return string_to_char_array("");
     }
 }
-char* string_to_char_array(const char* str) {
-    char * charr;
-    strcpy(charr, str);
-    return strdup(charr);
+*/
+
+void print_type_str(int type) {
+    switch (type) {
+        case INT_T:
+            printf("int");
+            break;
+        case BOOL_T:
+            printf("bool");
+            break;
+        case FLOAT_T:
+            printf("float");
+            break;
+        case CHAR_T:
+            printf("char");
+            break;
+        case STRING_T:
+            printf("string");
+            break;
+        
+        default:
+            printf("undefined");
+    }
 }
+void print_nature_str(int nature) {
+    switch (nature) {
+        case VAR_N:
+            printf("VAR");
+            break;
+        case VEC_N:
+            printf("VECTOR");
+            break;
+        case FUNC_N:
+            printf("FUNCTION");
+            break;
+        case LIT_N:
+            printf("LITERAL");
+            break;
+        default:
+            printf(" ");
+            break;
+    }
+}
+

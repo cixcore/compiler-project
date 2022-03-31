@@ -80,11 +80,11 @@ static:
     TK_PR_STATIC 
     | %empty;
 type: 
-    TK_PR_INT       { $$ = INT_T; }
-    | TK_PR_FLOAT   { $$ = FLOAT_T; }
-    | TK_PR_CHAR    { $$ = CHAR_T; }
-    | TK_PR_BOOL    { $$ = BOOL_T; }
-    | TK_PR_STRING  { $$ = STRING_T; };
+    TK_PR_INT       { printf("%d\n", INT_T); $$ = INT_T; }
+    | TK_PR_FLOAT   { printf("%d\n", FLOAT_T);$$ = FLOAT_T; }
+    | TK_PR_CHAR    { printf("%d\n", CHAR_T);$$ = CHAR_T; }
+    | TK_PR_BOOL    { printf("%d\n", BOOL_T);$$ = BOOL_T; }
+    | TK_PR_STRING  { printf("%d\n", STRING_T);$$ = STRING_T; };
 var_global_list: 
     var_global ',' var_global_list 
     | var_global;
@@ -92,7 +92,7 @@ var_global:
     TK_IDENTIFICADOR                          { declare_id_entry_missing_type($1); free_lex_val($1); }
     | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { declare_vector_entry_missing_type($1, $3); free_lex_val($1); free_lex_val($3); };
 
-func: static type TK_IDENTIFICADOR '('parameters')' '{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $8); create_func_entry_with_args($3, $2, FUNC_N);  /*pop_scope();*/ };
+func: static type TK_IDENTIFICADOR '('parameters')' {create_func_entry_with_args($3, $2, FUNC_N);}'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); /*pop_scope();*/ };
 
 parameters: 
     parameters_list 
@@ -110,7 +110,7 @@ command_block:
     | %empty                    { $$ = NULL; };
 
 command: 
-    '{'command_block'}'     { push_scope(); $$ = $2; pop_scope(); }
+    '{'command_block'}'     { push_scope(); $$ = $2; /*pop_scope();*/ }
     | dec_var_local         { $$ = $1; }
     | attr                  { $$ = $1; }
     | input                 { $$ = $1; }

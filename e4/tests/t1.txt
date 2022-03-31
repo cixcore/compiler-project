@@ -1,14 +1,6 @@
 static int um, dois[3];
 string tres, quatro;
-static int func (){
-	a = c && b;
-	exp = f(a,b) > 10 ? g('a') : **a;
-}
-static int func_args (int a, bool b){
-	a = c && b;
-	exp = f(a,b) > 10 ? g('a') : **a;
-}
-static int func_args_rep (int a, bool c){
-	a = c && b;
-	exp = f(a,b) > 10 ? g('a') : **a;
+static int func (int a){
+	int i,j;
+	string kk <= "";
 }

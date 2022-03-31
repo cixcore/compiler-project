@@ -58,6 +58,8 @@ int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature);
 void validate_not_string_vector(int type, int nature, symtable_content content, char* symtable_key);
 void validate_nature(int expected_n, int actual_n, int line);
 void validate_err_function_string(int type, int line, int col);
+symtable_content* validate_attr_id(char* symtable_key, int line, int col);
+void validate_attr_expr(lex_value_t* id, struct node* expr);
 
 void pop_scope();
 void push_scope();
@@ -73,5 +75,9 @@ void free_symbols_table(symbols_table table);
 void free_undefs();
 void print_scopes();
 void print_undef();
+void print_type_str(int type);
+void print_nature_str(int nature);
+/*
 char* type_str(int type);
 char* nature_str(int nature);
+*/
