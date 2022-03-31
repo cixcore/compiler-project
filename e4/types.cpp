@@ -26,7 +26,6 @@ void local_init_types_validate_and_add_to_scope(int type) {
     if(scopes.empty()) {
         scopes.push_front(deepcopy_table);
     } else {
-        cout << "scopesize: " << scopes.size();
         print_scopes();
         scopes.front().insert(deepcopy_table.begin(), deepcopy_table.end());
     }
@@ -250,7 +249,7 @@ void validate_attr_expr(lex_value_t* id, struct node* expr)
             printf("program exit code (%d).", ERR_WRONG_TYPE);
             exit(ERR_WRONG_TYPE);
         }
-        validate_nature(id_content->nature, expr_content->nature, id_content->lin);
+        validate_nature(id_content->nature, expr_content->nature, get_line_number());
         validate_size(*id_content, *expr_content);
     }
 
@@ -301,7 +300,7 @@ void validate_nature(int expected_n, int actual_n, int line) {
         printf("program exit code (%d).", ERR_VARIABLE);
         exit(ERR_VARIABLE);  
     } if(expected_n == VEC_N && (actual_n == VAR_N || actual_n == FUNC_N)) {
-        cout << "Attempt to use VEC as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
+        cout << "Attempt to use VEC as '";print_nature_str(actual_n);cout<<"' at ln " << line <<", col " << get_col_number() << ".\n";
         printf("program exit code (%d).", ERR_VECTOR);
         exit(ERR_VECTOR);  
     } if(expected_n == FUNC_N && (actual_n == VAR_N || actual_n == VEC_N)) {
@@ -314,7 +313,7 @@ void validate_size(symtable_content content_max, symtable_content content_receiv
     if(content_max.size < content_received.size)
     {
         cout << "Attempt to initialize variable '"<<content_max.token_value_data.str<<"' with content exceedind its maximum bytes size ("<<content_max.size<<") ";
-        cout<<"' at ln " << content_max.lin << ", col " << content_max.col << ".\n";
+        cout<<"set at ln " << content_max.lin << ", col " << content_max.col << ".\n";
         printf("program exit code (%d).", ERR_STRING_MAX);
         exit(ERR_STRING_MAX);  
     }
