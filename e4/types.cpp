@@ -210,18 +210,6 @@ void declare_id_entry_missing_type_init_lit(struct lex_value_t *id_to_add, struc
     undefined_type_entries.insert(entry(strdup(id_to_add->token.str), new_c));
 }
 
-void validate_err_declared_symbol(symtable_content content, char* symtable_key, int nature) {
-    symbols_table scope = scopes.front();
-    auto table_entry = scope.find(symtable_key);
-
-    if(table_entry != scope.end()) {
-        cout << "Redeclaration at ln "<<content.lin<<", col "<<content.col<<": identifier '"<<symtable_key<<"' (";
-        print_nature_str(content.nature); cout<<") is already in use at ln "<<table_entry->second->lin<<", col "<<table_entry->second->col<<" (";
-        print_nature_str(table_entry->second->nature); cout<<").\n";
-        printf("program exit code (%d).", ERR_DECLARED);
-        exit(ERR_DECLARED);
-    }    
-}
 
 symtable_content* validate_attr_id(char* symtable_key, int line, int col)
 {
@@ -235,10 +223,10 @@ symtable_content* validate_attr_id(char* symtable_key, int line, int col)
     printf("program exit code (%d).", ERR_UNDECLARED);
     exit(ERR_UNDECLARED); 
 }
-
-void validate_attr_expr(lex_value_t* id, struct node* expr)
+void validate_attr_expr(lex_value_t* id, int nature, struct node* expr)
 {
     symtable_content* id_content = validate_attr_id(id->token.str, id->line, get_col_number());
+    validate_nature(id_content->nature, nature, get_line_number());
 
     if(expr->value->type == ID) {
         symtable_content* expr_content = validate_attr_id(expr->value->token.str, expr->value->line, get_col_number());
@@ -249,17 +237,51 @@ void validate_attr_expr(lex_value_t* id, struct node* expr)
             printf("program exit code (%d).", ERR_WRONG_TYPE);
             exit(ERR_WRONG_TYPE);
         }
-        validate_nature(id_content->nature, expr_content->nature, get_line_number());
+        validate_nature(expr_content->nature, VAR_N, get_line_number());
         validate_size(*id_content, *expr_content);
     }
-
+ 
+    validate_attr_vec_acess(expr);
+}
+void validate_attr_vec_acess(struct node* expr) {
     if(expr->value->type == OC && strcmp(expr->value->token.str, "[]") == 0) {
-        // significa que é um acessoa  vetor, o primeiro filho é o identificador utilizado
+        // significa que é um acesso a  vetor, o primeiro filho é o identificador utilizado
         symtable_content* expr_content = validate_attr_id(expr->children[0]->value->token.str, expr->value->line, get_col_number());
-        validate_nature(id_content->nature, VAR_N, id_content->lin);
+        validate_nature(expr_content->nature, VEC_N, expr_content->lin);
         // não valida tamanho pois não existe vetor de string, e os outros tipos podem ser convertidos e já foram validados
     }
+}
 
+void validate_input_id(lex_value_t* id) {
+    symtable_content* id_content = validate_attr_id(id->token.str, id->line, get_col_number());
+    validate_nature(id_content->nature, VAR_N, get_line_number());
+    if(id_content->type != INT_T && id_content->type != FLOAT_T) 
+    {
+        cout << "Command 'input' at ln " << get_line_number() << ", col " << get_col_number() << " must be used with identifier of type int or float. Received <";
+        print_type_str(id_content->type); cout<<">.\n";
+        printf("program exit code (%d).", ERR_WRONG_PAR_INPUT);
+        exit(ERR_WRONG_PAR_INPUT);
+    }
+}
+void validate_output_id(lex_value_t* id) {
+    symtable_content* id_content = validate_attr_id(id->token.str, id->line, get_col_number());
+    validate_nature(id_content->nature, VAR_N, get_line_number());
+    if(id_content->type != INT_T && id_content->type != FLOAT_T)
+    {
+        cout << "Command 'output' at ln " << get_line_number() << ", col " << get_col_number() << " must be used with identifier or literal of type int or float. Received <";
+        print_type_str(id_content->type); cout<<">.\n";
+        printf("program exit code (%d).", ERR_WRONG_PAR_OUTPUT);
+        exit(ERR_WRONG_PAR_OUTPUT);
+    }
+}
+void validate_output_lit(int type){
+    if(type != INT_T && type != FLOAT_T)
+    {
+        cout << "Command 'output' at ln " << get_line_number() << ", col " << get_col_number() << " must be used with identifier or literal of type int or float. Received <";
+        print_type_str(type); cout<<">.\n";
+        printf("program exit code (%d).", ERR_WRONG_PAR_OUTPUT);
+        exit(ERR_WRONG_PAR_OUTPUT);
+    }
 }
 
 int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature) {
@@ -267,7 +289,7 @@ int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature) {
 
         auto table_entry = scope->find(id_init.token.str);
         if(table_entry != scope->end()) {
-            validate_nature(nature, table_entry->second->nature, id_init.line);
+            validate_nature(table_entry->second->nature, nature, id_init.line);
             return table_entry->second->type;
         }  
     }
@@ -283,6 +305,18 @@ int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature) {
     printf("program exit code (%d).", ERR_UNDECLARED);
     exit(ERR_UNDECLARED);  
 }
+void validate_err_declared_symbol(symtable_content content, char* symtable_key, int nature) {
+    symbols_table scope = scopes.front();
+    auto table_entry = scope.find(symtable_key);
+
+    if(table_entry != scope.end()) {
+        cout << "Redeclaration at ln "<<content.lin<<", col "<<content.col<<": identifier '"<<symtable_key<<"' (";
+        print_nature_str(content.nature); cout<<") is already in use at ln "<<table_entry->second->lin<<", col "<<table_entry->second->col<<" (";
+        print_nature_str(table_entry->second->nature); cout<<").\n";
+        printf("program exit code (%d).", ERR_DECLARED);
+        exit(ERR_DECLARED);
+    }    
+}
 int size_of(struct lex_value_t id_init) {
     for(auto scope = scopes.begin(); scope != scopes.end(); scope++)
     {
@@ -296,15 +330,15 @@ int size_of(struct lex_value_t id_init) {
 }
 void validate_nature(int expected_n, int actual_n, int line) {
     if(expected_n == VAR_N && (actual_n == VEC_N || actual_n == FUNC_N)) {
-        cout << "Attempt to use VAR as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
+        cout << "Attempt to use 'VARIABLE' as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
         printf("program exit code (%d).", ERR_VARIABLE);
         exit(ERR_VARIABLE);  
     } if(expected_n == VEC_N && (actual_n == VAR_N || actual_n == FUNC_N)) {
-        cout << "Attempt to use VEC as '";print_nature_str(actual_n);cout<<"' at ln " << line <<", col " << get_col_number() << ".\n";
+        cout << "Attempt to use 'VECTOR' as '";print_nature_str(actual_n);cout<<"' at ln " << line <<", col " << get_col_number() << ".\n";
         printf("program exit code (%d).", ERR_VECTOR);
         exit(ERR_VECTOR);  
     } if(expected_n == FUNC_N && (actual_n == VAR_N || actual_n == VEC_N)) {
-        cout << "Attempt to use FUNC as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
+        cout << "Attempt to use 'FUNCTION' as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
         printf("program exit code (%d).", ERR_FUNCTION);
         exit(ERR_FUNCTION);  
     }
@@ -470,7 +504,7 @@ void print_type_str(int type) {
 void print_nature_str(int nature) {
     switch (nature) {
         case VAR_N:
-            printf("VAR");
+            printf("VARIABLE");
             break;
         case VEC_N:
             printf("VECTOR");

@@ -3,4 +3,10 @@ string tres, quatro;
 static int func (int a){
 	int i,j;
 	string kk <= "";
+	dois[1] = i;
+	j = dois[i];
+
+	input j;
+	output j;
+	output 1.2;
 }

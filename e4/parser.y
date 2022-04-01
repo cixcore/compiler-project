@@ -92,7 +92,7 @@ var_global:
     TK_IDENTIFICADOR                          { declare_id_entry_missing_type($1); free_lex_val($1); }
     | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { declare_vector_entry_missing_type($1, $3); free_lex_val($1); free_lex_val($3); };
 
-func: static type TK_IDENTIFICADOR '('parameters')' {create_func_entry_with_args($3, $2, FUNC_N);}'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); /*pop_scope();*/ };
+func: static type TK_IDENTIFICADOR '('parameters')' {create_func_entry_with_args($3, $2, FUNC_N);}'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); pop_scope(); };
 
 parameters: 
     parameters_list 
@@ -110,7 +110,7 @@ command_block:
     | %empty                    { $$ = NULL; };
 
 command: 
-    '{'command_block'}'     { push_scope(); $$ = $2; /*pop_scope();*/ }
+    '{'command_block'}'     { push_scope(); $$ = $2; pop_scope(); }
     | dec_var_local         { $$ = $1; }
     | attr                  { $$ = $1; }
     | input                 { $$ = $1; }
@@ -147,13 +147,14 @@ literal:
 
 
 attr: 
-    TK_IDENTIFICADOR '=' expr                   { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), lexToNode($1), $3); validate_attr_expr($1, $3); }
-    | TK_IDENTIFICADOR'[' expr ']' '=' expr     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), createParentNode2Children(lexToNode(lexValueFromOC("[]")), lexToNode($1), $3), $6); };
+    TK_IDENTIFICADOR '=' expr                   { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), lexToNode($1), $3); validate_attr_expr($1, VAR_N, $3); }
+    | TK_IDENTIFICADOR'[' expr ']' '=' expr     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), createParentNode2Children(lexToNode(lexValueFromOC("[]")), lexToNode($1), $3), $6); 
+                                                    validate_attr_expr($1, VEC_N, $6); };
 
-input:  TK_PR_INPUT TK_IDENTIFICADOR     { $$ = createParentNode1Child(lexToNode($1), createLeaf($2)); };
+input:  TK_PR_INPUT TK_IDENTIFICADOR     { $$ = createParentNode1Child(lexToNode($1), createLeaf($2)); validate_input_id($2); };
 output: 
-    TK_PR_OUTPUT TK_IDENTIFICADOR        { $$ = createParentNode1Child(lexToNode($1), createLeaf($2)); }
-    | TK_PR_OUTPUT literal               { $$ = createParentNode1Child(lexToNode($1), $2); };
+    TK_PR_OUTPUT TK_IDENTIFICADOR        { $$ = createParentNode1Child(lexToNode($1), createLeaf($2)); validate_output_id($2); }
+    | TK_PR_OUTPUT literal               { $$ = createParentNode1Child(lexToNode($1), $2); validate_output_lit($2->type); };
 
 func_call: TK_IDENTIFICADOR '('func_call_parameters_list')'     { $$ = createParentNode1Child(createFuncCallNode($1), $3); };
 func_call_parameters_list: 

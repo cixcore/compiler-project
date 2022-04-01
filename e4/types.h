@@ -60,7 +60,11 @@ void validate_nature(int expected_n, int actual_n, int line);
 void validate_size(symtable_content content_max, symtable_content content_received);
 void validate_err_function_string(int type, int line, int col);
 symtable_content* validate_attr_id(char* symtable_key, int line, int col);
-void validate_attr_expr(lex_value_t* id, struct node* expr);
+void validate_attr_expr(lex_value_t* id, int nature, struct node* expr);
+void validate_attr_vec_acess(struct node* expr);
+void validate_input_id(lex_value_t* id);
+void validate_output_id(lex_value_t* id);
+void validate_output_lit(int type);
 
 void pop_scope();
 void push_scope();
