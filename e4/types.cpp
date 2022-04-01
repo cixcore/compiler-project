@@ -16,7 +16,7 @@ int expected_ret_type;
 void local_init_types_validate_and_add_to_scope(int type) {
     for(auto it = undefined_type_entries.begin(); it!=undefined_type_entries.end(); ++it) {
         if(it->second->type > UND_T) {
-            it->second->type = get_inferred_type_validate_char_string(type, it->second->type, *(it->second));
+            it->second->type = get_inferred_type_symtable_cont(type, it->second->type, *(it->second));
         } else {
             it->second->type = type;
         }
@@ -430,6 +430,9 @@ void validate_err_function_string(int type, int line, int col) {
     }
 }
 
+void validate_node_type(struct node* n1, struct node* n2) {
+    get_inferred_type_validate_char_string(n1->type, n2->type, get_line_number(), get_col_number());}
+
 void pop_scope() {
     free_symbols_table(scopes.front());
     scopes.pop_front();
@@ -439,24 +442,41 @@ void push_scope() {
     scopes.push_front(new_scope);
 }
 
-int get_inferred_type_validate_char_string(int type1, int type2, symtable_content content) {
+int get_inferred_type_symtable_cont(int type1, int type2, symtable_content content) {
+    return get_inferred_type_validate_char_string(type1, type2, content.lin, content.col);
+
+}
+int get_inferred_type_validate_char_string(int type1, int type2, int lin, int col) {
     if(type1 == type2) return type1;
     if((type1 == INT_T && type2 == FLOAT_T) || (type2 == INT_T && type1 == FLOAT_T)) return FLOAT_T;
     if((type1 == INT_T && type2 == BOOL_T) || (type2 == INT_T && type1 == BOOL_T)) return INT_T;
     if((type1 == FLOAT_T && type2 == BOOL_T) || (type2 == FLOAT_T && type1 == BOOL_T)) return FLOAT_T;
 
     if(type1 == CHAR_T) {
-        cout << "Attempt to coerce variable of type <char> to type <";print_type_str(type2);cout <<"> at ln "<<content.lin<<", col "<<content.col<<".\n";
+        cout << "Attempt to coerce variable of type <char> to type <";print_type_str(type2);cout <<"> at ln "<<lin<<", col "<<col<<".\n";
+        printf("program exit code (%d).", ERR_CHAR_TO_X);
+        exit(ERR_CHAR_TO_X);
+    }
+    if(type2 == CHAR_T) {
+        cout << "Attempt to coerce variable of type <char> to type <";print_type_str(type1);cout <<"> at ln "<<lin<<", col "<<col<<".\n";
         printf("program exit code (%d).", ERR_CHAR_TO_X);
         exit(ERR_CHAR_TO_X);
     }
     if(type1 == STRING_T) {
-        cout << "Attempt to coerce variable of type <string> to type <";print_type_str(type2);cout <<"> at ln "<<content.lin<<", col "<<content.col<<".\n";
+        cout << "Attempt to coerce variable of type <string> to type <";print_type_str(type2);cout <<"> at ln "<<lin<<", col "<<col<<".\n";
+        printf("program exit code (%d).", ERR_STRING_TO_X);
+        exit(ERR_STRING_TO_X);
+    }
+    if(type2 == STRING_T) {
+        cout << "Attempt to coerce variable of type <string> to type <";print_type_str(type1);cout <<"> at ln "<<lin<<", col "<<col<<".\n";
         printf("program exit code (%d).", ERR_STRING_TO_X);
         exit(ERR_STRING_TO_X);
     }
 
     return UND_T;
+}
+int get_inferred_type_node(struct node* n1, struct node* n2) {
+    return get_inferred_type_validate_char_string(n1->type, n2->type, get_line_number(), get_col_number());
 }
 
 void clearTypeStructures() {
@@ -502,44 +522,6 @@ void print_undef() {
         cout << " | size: " << itm->second->size << ")\n";
     }
 }
-/*
-char* type_str(int type) {
-    switch (type) {
-        case INT_T:
-            return string_to_char_array("int");
-        case BOOL_T:
-            return string_to_char_array("bool");
-        case FLOAT_T:
-            return string_to_char_array("float");
-        case CHAR_T:
-            return string_to_char_array("char");
-        case STRING_T:
-            return string_to_char_array("string");
-        
-        default:
-            return string_to_char_array("undefined");
-    }
-}
-char* string_to_char_array(const char* str) {
-    char * charr;
-    strcpy(charr, str);
-    return strdup(charr);
-}
-char* nature_str(int nature) {
-    switch (nature) {
-        case VAR_N:
-            return string_to_char_array("VAR");
-        case VEC_N:
-            return string_to_char_array("VECTOR");
-        case FUNC_N:
-            return string_to_char_array("FUNCTION");
-        case LIT_N:
-            return string_to_char_array("LITERAL");
-        default:
-            return string_to_char_array("");
-    }
-}
-*/
 
 void print_type_str(int type) {
     switch (type) {
@@ -583,3 +565,41 @@ void print_nature_str(int nature) {
     }
 }
 
+/*
+char* type_str(int type) {
+    switch (type) {
+        case INT_T:
+            return string_to_char_array("int");
+        case BOOL_T:
+            return string_to_char_array("bool");
+        case FLOAT_T:
+            return string_to_char_array("float");
+        case CHAR_T:
+            return string_to_char_array("char");
+        case STRING_T:
+            return string_to_char_array("string");
+        
+        default:
+            return string_to_char_array("undefined");
+    }
+}
+char* string_to_char_array(const char* str) {
+    char * charr;
+    strcpy(charr, str);
+    return strdup(charr);
+}
+char* nature_str(int nature) {
+    switch (nature) {
+        case VAR_N:
+            return string_to_char_array("VAR");
+        case VEC_N:
+            return string_to_char_array("VECTOR");
+        case FUNC_N:
+            return string_to_char_array("FUNCTION");
+        case LIT_N:
+            return string_to_char_array("LITERAL");
+        default:
+            return string_to_char_array("");
+    }
+}
+*/

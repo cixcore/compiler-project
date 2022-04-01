@@ -68,13 +68,16 @@ void validate_input_id(lex_value_t* id);
 void validate_output_id(lex_value_t* id);
 void validate_output_lit(int type);
 void validate_shift(struct lex_value_t *lit);
+void validate_node_type(struct node* n1, struct node* n2);
 
 void pop_scope();
 void push_scope();
 
 int bytes_of(int type);
 int size_of(struct lex_value_t id_init);
-int get_inferred_type_validate_char_string(int type1, int type2, symtable_content content);
+int get_inferred_type_validate_char_string(int type1, int type2, int lin, int col);
+int get_inferred_type_symtable_cont(int type1, int type2, symtable_content content);
+int get_inferred_type_node(struct node* n1, struct node* n2);
 char* string_to_char_array(const char* str);
 
 void clearTypeStructures();

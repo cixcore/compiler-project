@@ -15,4 +15,6 @@ static int func (int a){
 
 	i << 2;
 	dois[3] >> 3;
+
+	b2 = i && kk;
 }

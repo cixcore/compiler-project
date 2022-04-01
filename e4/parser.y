@@ -189,41 +189,43 @@ for_block:
 while_block: TK_PR_WHILE'(' expr ')' TK_PR_DO '{' command_block '}' { $$ = createParentNode2Children(lexToNode($1), $3, $7); };
 
 expr: 
-    logical_or_or_and '?' expr ':' expr     { $$ = createParentNode3Children(lexToNode(lexValueFromOC("?:")), $1, $3, $5); }
+    logical_or_or_and '?' expr ':' expr     { $$ = createParentNode3Children(lexToNode(lexValueFromOC("?:")), $1, $3, $5); ; $$->type = get_inferred_type_node($3, $5); }
     | logical_or_or_and                     { $$ = $1; };
+
 logical_or_or_and: 
-    logical_or_or_and TK_OC_OR logical_and_or_bit_or { $$ = createParentNode2Children(lexToNode($2), $1, $3); }
+    logical_or_or_and TK_OC_OR logical_and_or_bit_or { $$ = createParentNode2Children(lexToNode($2), $1, $3); validate_node_type($1, $3); $$->type = BOOL_T; }
     | logical_and_or_bit_or                          { $$ = $1; };
 logical_and_or_bit_or: 
-    logical_and_or_bit_or TK_OC_AND bit_or_or_bit_and { $$ = createParentNode2Children(lexToNode($2), $1, $3); }
+    logical_and_or_bit_or TK_OC_AND bit_or_or_bit_and { $$ = createParentNode2Children(lexToNode($2), $1, $3); validate_node_type($1, $3); $$->type = BOOL_T; }
     | bit_or_or_bit_and                               { $$ = $1; };  
 bit_or_or_bit_and: 
-    bit_or_or_bit_and '|' bit_and_or_eq             { $$ = createParentNode2Children(lexToNode(lexValueFromSC('|')), $1, $3); }
+    bit_or_or_bit_and '|' bit_and_or_eq             { $$ = createParentNode2Children(lexToNode(lexValueFromSC('|')), $1, $3); validate_node_type($1, $3); $$->type = BOOL_T; }
     | bit_and_or_eq                                 { $$ = $1; };  
 bit_and_or_eq: 
-    bit_and_or_eq '&' eq_neq_or_compare             { $$ = createParentNode2Children(lexToNode(lexValueFromSC('&')), $1, $3); }
+    bit_and_or_eq '&' eq_neq_or_compare             { $$ = createParentNode2Children(lexToNode(lexValueFromSC('&')), $1, $3); validate_node_type($1, $3); $$->type = BOOL_T; }
     | eq_neq_or_compare                             { $$ = $1; };  
 eq_neq_or_compare: 
-    eq_neq_or_compare TK_OC_EQ compare_or_sum       { $$ = createParentNode2Children(lexToNode($2), $1, $3); }
-    | eq_neq_or_compare TK_OC_NE compare_or_sum     { $$ = createParentNode2Children(lexToNode($2), $1, $3); }
+    eq_neq_or_compare TK_OC_EQ compare_or_sum       { $$ = createParentNode2Children(lexToNode($2), $1, $3); validate_node_type($1, $3); $$->type = BOOL_T; }
+    | eq_neq_or_compare TK_OC_NE compare_or_sum     { $$ = createParentNode2Children(lexToNode($2), $1, $3); validate_node_type($1, $3); $$->type = BOOL_T; }
     | compare_or_sum                                { $$ = $1; };
 compare_or_sum: 
-    compare_or_sum TK_OC_LE sum_sub_or_mult_div_or_pow       { $$ = createParentNode2Children(lexToNode($2), $1, $3); }
-    | compare_or_sum TK_OC_GE sum_sub_or_mult_div_or_pow     { $$ = createParentNode2Children(lexToNode($2), $1, $3); } 
-    | compare_or_sum '<' sum_sub_or_mult_div_or_pow          { $$ = createParentNode2Children(lexToNode(lexValueFromSC('<')), $1, $3); }
-    | compare_or_sum '>' sum_sub_or_mult_div_or_pow          { $$ = createParentNode2Children(lexToNode(lexValueFromSC('>')), $1, $3); }  
+    compare_or_sum TK_OC_LE sum_sub_or_mult_div_or_pow       { $$ = createParentNode2Children(lexToNode($2), $1, $3); validate_node_type($1, $3); $$->type = BOOL_T; }
+    | compare_or_sum TK_OC_GE sum_sub_or_mult_div_or_pow     { $$ = createParentNode2Children(lexToNode($2), $1, $3); validate_node_type($1, $3); $$->type = BOOL_T; } 
+    | compare_or_sum '<' sum_sub_or_mult_div_or_pow          { $$ = createParentNode2Children(lexToNode(lexValueFromSC('<')), $1, $3); validate_node_type($1, $3); $$->type = BOOL_T; }
+    | compare_or_sum '>' sum_sub_or_mult_div_or_pow          { $$ = createParentNode2Children(lexToNode(lexValueFromSC('>')), $1, $3); validate_node_type($1, $3); $$->type = BOOL_T; }  
     | sum_sub_or_mult_div_or_pow                             { $$ = $1; };  
+
 sum_sub_or_mult_div_or_pow: 
-    sum_sub_or_mult_div_or_pow '+' mult_div_or_pow       { $$ = createParentNode2Children(lexToNode(lexValueFromSC('+')), $1, $3); }
-    | sum_sub_or_mult_div_or_pow '-' mult_div_or_pow     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('-')), $1, $3); }
+    sum_sub_or_mult_div_or_pow '+' mult_div_or_pow       { $$ = createParentNode2Children(lexToNode(lexValueFromSC('+')), $1, $3); get_inferred_type_node($1, $3); }
+    | sum_sub_or_mult_div_or_pow '-' mult_div_or_pow     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('-')), $1, $3); get_inferred_type_node($1, $3); }
     | mult_div_or_pow                                    { $$ = $1; };  
 mult_div_or_pow: 
-    mult_div_or_pow '*' pow_or_op       { $$ = createParentNode2Children(lexToNode(lexValueFromSC('*')), $1, $3); }
-    | mult_div_or_pow '/' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('/')), $1, $3); }
-    | mult_div_or_pow '%' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('%')), $1, $3); }
+    mult_div_or_pow '*' pow_or_op       { $$ = createParentNode2Children(lexToNode(lexValueFromSC('*')), $1, $3); get_inferred_type_node($1, $3); }
+    | mult_div_or_pow '/' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('/')), $1, $3); get_inferred_type_node($1, $3); }
+    | mult_div_or_pow '%' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('%')), $1, $3); get_inferred_type_node($1, $3); }
     | pow_or_op                         { $$ = $1; };
 pow_or_op: 
-    pow_or_op '^' unary_expr            { $$ = createParentNode2Children(lexToNode(lexValueFromSC('^')), $1, $3); }
+    pow_or_op '^' unary_expr            { $$ = createParentNode2Children(lexToNode(lexValueFromSC('^')), $1, $3); get_inferred_type_node($1, $3); }
     | unary_expr                        { $$ = $1; };
 
 unary_expr: 
