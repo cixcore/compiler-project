@@ -203,13 +203,68 @@ void declare_id_entry_missing_type_init_lit(struct lex_value_t *id_to_add, struc
     new_c->size = lit_init->type == STRING_T ? strlen(lit_init->value->token.str) : 1;
     new_c->token_value_data = id_to_add->token;
 
-    cout << lit_init->value->token.str << " " << new_c->size <<endl;
-
     validate_err_declared_symbol(*new_c, id_to_add->token.str, VAR_N);
 
     undefined_type_entries.insert(entry(strdup(id_to_add->token.str), new_c));
 }
 
+void add_symtable_lit(struct lex_value_t *lit) {
+    int type = type_from_lex_val(lit->type);
+    struct symtable_content *new_c = new symtable_content();
+    new_c->lin = lit->line;
+    new_c->col = get_col_number();
+    new_c->type = type;
+    new_c->nature = LIT_N;
+    new_c->size = type != STRING_T ? bytes_of(type) : strlen(lit->token.str) ;
+    new_c->token_value_data = lit->token;
+
+    if(scopes.empty()) {
+        symbols_table new_table;
+        scopes.push_front(new_table);
+    }
+
+    char* key;
+    switch(lit->type){
+        case LIT_BOOL:
+            lit->token.boolean == TRUE ? key = strdup("true") : key = strdup("false");
+            break;
+        case LIT_CHAR:
+            key = (char*)malloc(2*sizeof(char));
+            key[0] = lit->token.character;
+            key[1] = '\0';
+            break;
+        case LIT_FLOAT:
+            key = strdup(to_string(lit->token.flt).c_str());
+            break;
+        case LIT_INT:
+            key = strdup(to_string(lit->token.integer).c_str());
+            break;
+        case LIT_STR:
+            key = strdup(lit->token.str);
+            break;
+    }
+
+    scopes.front().insert(entry(strdup(key), new_c));
+    free(key);
+}
+
+int type_from_lex_val(int lex_val_type) {
+    switch (lex_val_type) {
+        case LIT_INT:
+            return INT_T;
+        case LIT_FLOAT:
+            return FLOAT_T;
+        case LIT_CHAR:
+            return CHAR_T;
+        case LIT_BOOL:
+            return BOOL_T;
+        case LIT_STR:
+            return STRING_T;
+        
+        default:
+            return UND_T;
+    }
+}
 
 symtable_content* validate_attr_id(char* symtable_key, int line, int col)
 {

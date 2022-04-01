@@ -52,6 +52,8 @@ void declare_vector_entry_missing_type(struct lex_value_t *identifier, struct le
 void declare_entry_missing_type(struct lex_value_t *identifier, int nat, int mult);
 void declare_id_entry_missing_type_init_id(struct lex_value_t *id_to_add, struct lex_value_t *id_init);
 void declare_id_entry_missing_type_init_lit(struct lex_value_t *id_to_add, struct node *lit_init);
+void add_symtable_lit(struct lex_value_t *lit);
+int type_from_lex_val(int lex_val_type);
 
 void validate_err_declared_symbol(symtable_content content, char* symtable_key, int nature);
 int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature);

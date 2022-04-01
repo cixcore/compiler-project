@@ -92,7 +92,7 @@ var_global:
     TK_IDENTIFICADOR                          { declare_id_entry_missing_type($1); free_lex_val($1); }
     | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { declare_vector_entry_missing_type($1, $3); free_lex_val($1); free_lex_val($3); };
 
-func: static type TK_IDENTIFICADOR '('parameters')' {create_func_entry_with_args($3, $2, FUNC_N);}'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); pop_scope(); };
+func: static type TK_IDENTIFICADOR '('parameters')' {create_func_entry_with_args($3, $2, FUNC_N);}'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); /*pop_scope();*/ };
 
 parameters: 
     parameters_list 
@@ -110,7 +110,7 @@ command_block:
     | %empty                    { $$ = NULL; };
 
 command: 
-    '{'command_block'}'     { push_scope(); $$ = $2; pop_scope(); }
+    '{'command_block'}'     { push_scope(); $$ = $2; /*pop_scope();*/ }
     | dec_var_local         { $$ = $1; }
     | attr                  { $$ = $1; }
     | input                 { $$ = $1; }
@@ -134,16 +134,16 @@ var_local:
     | TK_IDENTIFICADOR TK_OC_LE literal             { declare_id_entry_missing_type_init_lit($1, $3); $$ = createParentNode2Children(lexToNode($2), lexToNode($1), $3); };
 
 literal: 
-    '-' TK_LIT_INT                  { $$ = createNLeaf($2); $$->type = INT_T; }
-    | '+' TK_LIT_INT                { $$ = createLeaf($2); $$->type = INT_T; }
-    |  TK_LIT_INT                   { $$ = createLeaf($1); $$->type = INT_T; }
-    | '+' TK_LIT_FLOAT              { $$ = createLeaf($2); $$->type = FLOAT_T; }
-    | '-' TK_LIT_FLOAT              { $$ = createNLeaf($2); $$->type = FLOAT_T; }
-    | TK_LIT_FLOAT                  { $$ = createLeaf($1); $$->type = FLOAT_T; }
-    | TK_LIT_FALSE                  { $$ = createLeaf($1); $$->type = BOOL_T; }
-    | TK_LIT_TRUE                   { $$ = createLeaf($1); $$->type = BOOL_T; }
-    | TK_LIT_CHAR                   { $$ = createLeaf($1); $$->type = CHAR_T; }
-    | TK_LIT_STRING                 { $$ = createLeaf($1); $$->type = STRING_T; };
+    '-' TK_LIT_INT                  { $$ = createNLeaf($2); $$->type = INT_T; add_symtable_lit($2); }
+    | '+' TK_LIT_INT                { $$ = createLeaf($2); $$->type = INT_T; add_symtable_lit($2); }
+    |  TK_LIT_INT                   { $$ = createLeaf($1); $$->type = INT_T; add_symtable_lit($1); }
+    | '+' TK_LIT_FLOAT              { $$ = createLeaf($2); $$->type = FLOAT_T; add_symtable_lit($2); }
+    | '-' TK_LIT_FLOAT              { $$ = createNLeaf($2); $$->type = FLOAT_T; add_symtable_lit($2); }
+    | TK_LIT_FLOAT                  { $$ = createLeaf($1); $$->type = FLOAT_T; add_symtable_lit($1); }
+    | TK_LIT_FALSE                  { $$ = createLeaf($1); $$->type = BOOL_T; add_symtable_lit($1); }
+    | TK_LIT_TRUE                   { $$ = createLeaf($1); $$->type = BOOL_T; add_symtable_lit($1); }
+    | TK_LIT_CHAR                   { $$ = createLeaf($1); $$->type = CHAR_T; add_symtable_lit($1); }
+    | TK_LIT_STRING                 { $$ = createLeaf($1); $$->type = STRING_T; add_symtable_lit($1); };
 
 
 attr: 
@@ -236,8 +236,8 @@ operand:
     | func_call                         { $$ = $1; }
     | '('expr')'                        { $$ = $2; };
 unsigned_literal: 
-    TK_LIT_INT                   { $$ = createLeaf($1); $$->type = INT_T; }
-    | TK_LIT_FLOAT               { $$ = createLeaf($1); $$->type = FLOAT; };
+    TK_LIT_INT                   { $$ = createLeaf($1); $$->type = INT_T; add_symtable_lit($1); }
+    | TK_LIT_FLOAT               { $$ = createLeaf($1); $$->type = FLOAT_T; add_symtable_lit($1); };
 
 opt_unary_operator: 
     '+'                    { $$ = lexToNode(lexValueFromSC('+')); }

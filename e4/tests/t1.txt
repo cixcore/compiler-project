@@ -1,8 +1,11 @@
 static int um, dois[3];
 string tres, quatro;
 static int func (int a){
-	int i,j;
-	string kk <= "";
+	int i,j, l<=-2, m<=3;
+	string kk <= "stringa";
+	bool b1 <= true, b2<=false;
+	float f1 <= -12.3e-1, f2<=2.3;
+	
 	dois[1] = i;
 	j = dois[i];
 
