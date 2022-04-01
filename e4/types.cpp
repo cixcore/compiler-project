@@ -26,9 +26,9 @@ void local_init_types_validate_and_add_to_scope(int type) {
     if(scopes.empty()) {
         scopes.push_front(deepcopy_table);
     } else {
-        print_scopes();
         scopes.front().insert(deepcopy_table.begin(), deepcopy_table.end());
     }
+    print_scopes();
     undefined_type_entries.clear();
 }
 void global_init_types_and_add_to_scope(int type) 
@@ -336,6 +336,13 @@ void validate_output_lit(int type){
         print_type_str(type); cout<<">.\n";
         printf("program exit code (%d).", ERR_WRONG_PAR_OUTPUT);
         exit(ERR_WRONG_PAR_OUTPUT);
+    }
+}
+void validate_shift(struct lex_value_t *lit) {
+    if(lit->token.integer > 16) {
+        cout << "Command 'shift' at ln " << lit->line << ", col " << get_col_number() << " cannot be used with integet value greater that 16 (received "<<lit->token.integer<<").\n";
+        printf("program exit code (%d).", ERR_WRONG_PAR_SHIFT);
+        exit(ERR_WRONG_PAR_SHIFT);
     }
 }
 

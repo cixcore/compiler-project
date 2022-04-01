@@ -5,11 +5,14 @@ static int func (int a){
 	string kk <= "stringa";
 	bool b1 <= true, b2<=false;
 	float f1 <= -12.3e-1, f2<=2.3;
-	
+
 	dois[1] = i;
 	j = dois[i];
 
 	input j;
 	output j;
 	output 1.2;
+
+	i << 2;
+	dois[3] >> 3;
 }

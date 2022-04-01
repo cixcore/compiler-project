@@ -67,6 +67,7 @@ void validate_attr_vec_acess(struct node* expr);
 void validate_input_id(lex_value_t* id);
 void validate_output_id(lex_value_t* id);
 void validate_output_lit(int type);
+void validate_shift(struct lex_value_t *lit);
 
 void pop_scope();
 void push_scope();

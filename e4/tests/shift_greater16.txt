@@ -1,0 +1,4 @@
+int j[10];
+static int func (){
+	j[3] >> 32;
+}

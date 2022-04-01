@@ -92,7 +92,7 @@ var_global:
     TK_IDENTIFICADOR                          { declare_id_entry_missing_type($1); free_lex_val($1); }
     | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { declare_vector_entry_missing_type($1, $3); free_lex_val($1); free_lex_val($3); };
 
-func: static type TK_IDENTIFICADOR '('parameters')' {create_func_entry_with_args($3, $2, FUNC_N);}'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); /*pop_scope();*/ };
+func: static type TK_IDENTIFICADOR '('parameters')' {create_func_entry_with_args($3, $2, FUNC_N);}'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); pop_scope(); };
 
 parameters: 
     parameters_list 
@@ -110,7 +110,7 @@ command_block:
     | %empty                    { $$ = NULL; };
 
 command: 
-    '{'command_block'}'     { push_scope(); $$ = $2; /*pop_scope();*/ }
+    '{'command_block'}'     { push_scope(); $$ = $2; pop_scope(); }
     | dec_var_local         { $$ = $1; }
     | attr                  { $$ = $1; }
     | input                 { $$ = $1; }
@@ -169,8 +169,8 @@ func_call_parameter:
 	| %empty						{ $$ = NULL; };
 
 shift: 
-    TK_IDENTIFICADOR shift_op TK_LIT_INT                    { $$ = createParentNode2Children($2, lexToNode($1), lexToNode($3)); }
-    | TK_IDENTIFICADOR '[' expr ']' shift_op TK_LIT_INT     { $$ = createParentNode2Children($5, createParentNode2Children(lexToNode(lexValueFromOC("[]")), lexToNode($1), $3), lexToNode($6)); };
+    TK_IDENTIFICADOR shift_op TK_LIT_INT                    { $$ = createParentNode2Children($2, lexToNode($1), lexToNode($3)); validate_shift($3); }
+    | TK_IDENTIFICADOR '[' expr ']' shift_op TK_LIT_INT     { $$ = createParentNode2Children($5, createParentNode2Children(lexToNode(lexValueFromOC("[]")), lexToNode($1), $3), lexToNode($6)); validate_shift($6); };
 
 shift_op: 
     TK_OC_SL        { $$ = createLeaf($1); }
