@@ -162,10 +162,10 @@ func_call_parameters_list:
 	| func_call_parameter					            { $$ = $1; };
 func_call_parameter: 
 	expr 							{ $$ = $1; }
-	| TK_LIT_CHAR 					{ $$ = createLeaf($1); }
-	| TK_LIT_STRING 				{ $$ = createLeaf($1); }
-	| TK_LIT_FALSE 					{ $$ = createLeaf($1); }
-	| TK_LIT_TRUE 					{ $$ = createLeaf($1); }
+	| TK_LIT_CHAR 					{ $$ = createLeaf($1); $$->type = CHAR_T; }
+	| TK_LIT_STRING 				{ $$ = createLeaf($1); $$->type = STRING_T; }
+	| TK_LIT_FALSE 					{ $$ = createLeaf($1); $$->type = BOOL_T; }
+	| TK_LIT_TRUE 					{ $$ = createLeaf($1); $$->type = BOOL_T; }
 	| %empty						{ $$ = NULL; };
 
 shift: 
@@ -236,8 +236,8 @@ operand:
     | func_call                         { $$ = $1; }
     | '('expr')'                        { $$ = $2; };
 unsigned_literal: 
-    TK_LIT_INT                   { $$ = createLeaf($1); }
-    | TK_LIT_FLOAT               { $$ = createLeaf($1); };
+    TK_LIT_INT                   { $$ = createLeaf($1); $$->type = INT_T; }
+    | TK_LIT_FLOAT               { $$ = createLeaf($1); $$->type = FLOAT; };
 
 opt_unary_operator: 
     '+'                    { $$ = lexToNode(lexValueFromSC('+')); }
