@@ -1,10 +1,10 @@
 static int um, dois[3];
 string tres, quatro;
-static int func (int a){
+static int func (int a, char b){
 	int i,j, l<=-2, m<=3;
 	string kk <= "stringa";
 	bool b1 <= true, b2<=false;
-	float f1 <= -12.3e-1, f2<=2.3;
+	float f1 <= -12.3e-3, f2<=2.3;
 
 	dois[1] = i;
 	j = dois[i];
@@ -15,6 +15,9 @@ static int func (int a){
 
 	i << 2;
 	dois[3] >> 3;
+}
+static int func2 (){
 
-	b2 = i && kk;
+	um = func1(4, 'a');
+	o = func(4, 4 ,5,"aaqa");
 }

@@ -46,6 +46,7 @@ void local_init_types_validate_and_add_to_scope(int type);
 void global_init_types_and_add_to_scope(int type);
 void create_func_entry_with_args(struct lex_value_t *identifier, int type, int nat);
 void collect_arg(struct lex_value_t *identifier, int type);
+void collect_param(struct node *lit);
 void create_entry(struct lex_value_t *identifier, int type, int nat, int mult);
 void declare_id_entry_missing_type(struct lex_value_t *identifier);
 void declare_vector_entry_missing_type(struct lex_value_t *identifier, struct lex_value_t *vec_size);
@@ -53,7 +54,6 @@ void declare_entry_missing_type(struct lex_value_t *identifier, int nat, int mul
 void declare_id_entry_missing_type_init_id(struct lex_value_t *id_to_add, struct lex_value_t *id_init);
 void declare_id_entry_missing_type_init_lit(struct lex_value_t *id_to_add, struct node *lit_init);
 void add_symtable_lit(struct lex_value_t *lit);
-int type_from_lex_val(int lex_val_type);
 
 void validate_err_declared_symbol(symtable_content content, char* symtable_key, int nature);
 int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature);
@@ -67,7 +67,9 @@ void validate_attr_vec_acess(struct node* expr);
 void validate_input_id(lex_value_t* id);
 void validate_output_id(lex_value_t* id);
 void validate_output_lit(int type);
+void validate_return(int type);
 void validate_shift(struct lex_value_t *lit);
+void validate_func_cal_parameters(struct lex_value_t *func);
 void validate_node_type(struct node* n1, struct node* n2);
 
 void pop_scope();
@@ -75,6 +77,7 @@ void push_scope();
 
 int bytes_of(int type);
 int size_of(struct lex_value_t id_init);
+int type_from_lex_val(int lex_val_type);
 int get_inferred_type_validate_char_string(int type1, int type2, int lin, int col);
 int get_inferred_type_symtable_cont(int type1, int type2, symtable_content content);
 int get_inferred_type_node(struct node* n1, struct node* n2);

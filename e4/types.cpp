@@ -10,6 +10,7 @@ using namespace std;
 list<symbols_table> scopes;
 symbols_table undefined_type_entries;
 vector<argument> arguments_collector;
+vector<node*> parameters_collector;
 
 int expected_ret_type;
 
@@ -151,6 +152,10 @@ void collect_arg(struct lex_value_t *identifier, int type) {
         .col = get_col_number(), 
         .lin = get_line_number()
     });
+}
+
+void collect_param(struct node *lit) {
+    parameters_collector.push_back(lit);
 }
 
 void declare_id_entry_missing_type(struct lex_value_t *identifier)
@@ -338,6 +343,42 @@ void validate_output_lit(int type){
         exit(ERR_WRONG_PAR_OUTPUT);
     }
 }
+void validate_return(int type){
+    if(type != expected_ret_type)
+    {
+        cout << "Wrong return type <";print_type_str(type);cout<<"> at line " << get_line_number() << ". Function expected <";
+        print_type_str(expected_ret_type); cout<<">.\n";
+        printf("program exit code (%d).", ERR_WRONG_PAR_RETURN);
+        exit(ERR_WRONG_PAR_RETURN);
+    }
+}
+void validate_func_cal_parameters(struct lex_value_t *func)
+{
+    symtable_content* func_content = validate_attr_id(func->token.str, func->line, get_col_number());
+    if(func_content->arguments.size() > parameters_collector.size())
+    {
+        cout << "Function '"<<func_content->token_value_data.str<<"' expected "<<func_content->arguments.size()<<" arguments, ";
+        cout << "but found "<<parameters_collector.size()<<" at ln "<<func->line<<", col "<<get_col_number()<<" .\n";
+        printf("program exit code (%d).", ERR_MISSING_ARGS);
+        exit(ERR_MISSING_ARGS);
+    }
+    if(func_content->arguments.size() < parameters_collector.size())
+    {
+        cout << "Function '"<<func_content->token_value_data.str<<"' expected "<<func_content->arguments.size()<<" arguments, ";
+        cout << "but found "<<parameters_collector.size()<<" at ln "<<func->line<<", col "<<get_col_number()<<" .\n";
+        printf("program exit code (%d).", ERR_EXCESS_ARGS);
+        exit(ERR_EXCESS_ARGS);  
+    }
+    int i = 0;
+    reverse(parameters_collector.begin(), parameters_collector.end());
+    for(auto arg = func_content->arguments.begin(); arg != func_content->arguments.end(); arg++)
+    {
+        get_inferred_type_validate_char_string(arg->type, parameters_collector[i]->type, func->line, get_col_number());
+        i++;
+    }
+
+    parameters_collector.clear();
+}
 void validate_shift(struct lex_value_t *lit) {
     if(lit->token.integer > 16) {
         cout << "Command 'shift' at ln " << lit->line << ", col " << get_col_number() << " cannot be used with integet value greater that 16 (received "<<lit->token.integer<<").\n";
@@ -431,7 +472,8 @@ void validate_err_function_string(int type, int line, int col) {
 }
 
 void validate_node_type(struct node* n1, struct node* n2) {
-    get_inferred_type_validate_char_string(n1->type, n2->type, get_line_number(), get_col_number());}
+    get_inferred_type_validate_char_string(n1->type, n2->type, get_line_number(), get_col_number());
+}
 
 void pop_scope() {
     free_symbols_table(scopes.front());
