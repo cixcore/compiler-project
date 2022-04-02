@@ -109,7 +109,7 @@ void libera(void *tree)
 {
     struct node *treeRoot = (struct node *)tree;
     freeTheTreeeees(treeRoot);
-    print_scopes();
+    //print_scopes();
     clearTypeStructures();
 }
 void freeTheTreeeees(struct node *no)

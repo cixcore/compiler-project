@@ -12,6 +12,8 @@ symbols_table undefined_type_entries;
 vector<argument> arguments_collector;
 vector<node*> parameters_collector;
 
+extern void *arvore;
+
 int expected_ret_type;
 
 void local_init_types_validate_and_add_to_scope(int type) {
@@ -29,7 +31,7 @@ void local_init_types_validate_and_add_to_scope(int type) {
     } else {
         scopes.front().insert(deepcopy_table.begin(), deepcopy_table.end());
     }
-    print_scopes();
+    //print_scopes();
     undefined_type_entries.clear();
 }
 void global_init_types_and_add_to_scope(int type) 
@@ -281,7 +283,9 @@ symtable_content* validate_attr_id(char* symtable_key, int line, int col)
     }
     cout << "Undeclared variable at ln "<<line<<", col "<<col<<": identifier '"<<symtable_key<<"'" << endl;    
     printf("program exit code (%d).", ERR_UNDECLARED);
+    libera(arvore);
     exit(ERR_UNDECLARED); 
+    libera(arvore);
 }
 void validate_attr_expr(lex_value_t* id, int nature, struct node* expr)
 {
@@ -295,6 +299,7 @@ void validate_attr_expr(lex_value_t* id, int nature, struct node* expr)
             cout << "Attempt to attribute variable of type <";print_type_str(id_content->type);cout<<"> to type <";print_type_str(expr_content->type);
             cout <<"> at ln "<<id_content->lin<<", col "<<id_content->col<<".\n";
             printf("program exit code (%d).", ERR_WRONG_TYPE);
+            libera(arvore);
             exit(ERR_WRONG_TYPE);
         }
         validate_nature(expr_content->nature, VAR_N, get_line_number());
@@ -320,6 +325,7 @@ void validate_input_id(lex_value_t* id) {
         cout << "Command 'input' at ln " << get_line_number() << ", col " << get_col_number() << " must be used with identifier of type int or float. Received <";
         print_type_str(id_content->type); cout<<">.\n";
         printf("program exit code (%d).", ERR_WRONG_PAR_INPUT);
+        libera(arvore);
         exit(ERR_WRONG_PAR_INPUT);
     }
 }
@@ -331,7 +337,8 @@ void validate_output_id(lex_value_t* id) {
         cout << "Command 'output' at ln " << get_line_number() << ", col " << get_col_number() << " must be used with identifier or literal of type int or float. Received <";
         print_type_str(id_content->type); cout<<">.\n";
         printf("program exit code (%d).", ERR_WRONG_PAR_OUTPUT);
-        exit(ERR_WRONG_PAR_OUTPUT);
+        libera(arvore);
+        exit(ERR_WRONG_PAR_OUTPUT); 
     }
 }
 void validate_output_lit(int type){
@@ -340,6 +347,7 @@ void validate_output_lit(int type){
         cout << "Command 'output' at ln " << get_line_number() << ", col " << get_col_number() << " must be used with identifier or literal of type int or float. Received <";
         print_type_str(type); cout<<">.\n";
         printf("program exit code (%d).", ERR_WRONG_PAR_OUTPUT);
+        libera(arvore);
         exit(ERR_WRONG_PAR_OUTPUT);
     }
 }
@@ -349,6 +357,7 @@ void validate_return(int type){
         cout << "Wrong return type <";print_type_str(type);cout<<"> at line " << get_line_number() << ". Function expected <";
         print_type_str(expected_ret_type); cout<<">.\n";
         printf("program exit code (%d).", ERR_WRONG_PAR_RETURN);
+        libera(arvore);
         exit(ERR_WRONG_PAR_RETURN);
     }
 }
@@ -360,6 +369,7 @@ void validate_func_cal_parameters(struct lex_value_t *func)
         cout << "Function '"<<func_content->token_value_data.str<<"' expected "<<func_content->arguments.size()<<" arguments, ";
         cout << "but found "<<parameters_collector.size()<<" at ln "<<func->line<<", col "<<get_col_number()<<" .\n";
         printf("program exit code (%d).", ERR_MISSING_ARGS);
+        libera(arvore);
         exit(ERR_MISSING_ARGS);
     }
     if(func_content->arguments.size() < parameters_collector.size())
@@ -367,6 +377,7 @@ void validate_func_cal_parameters(struct lex_value_t *func)
         cout << "Function '"<<func_content->token_value_data.str<<"' expected "<<func_content->arguments.size()<<" arguments, ";
         cout << "but found "<<parameters_collector.size()<<" at ln "<<func->line<<", col "<<get_col_number()<<" .\n";
         printf("program exit code (%d).", ERR_EXCESS_ARGS);
+        libera(arvore);
         exit(ERR_EXCESS_ARGS);  
     }
     int i = 0;
@@ -383,6 +394,7 @@ void validate_shift(struct lex_value_t *lit) {
     if(lit->token.integer > 16) {
         cout << "Command 'shift' at ln " << lit->line << ", col " << get_col_number() << " cannot be used with integet value greater that 16 (received "<<lit->token.integer<<").\n";
         printf("program exit code (%d).", ERR_WRONG_PAR_SHIFT);
+        libera(arvore);
         exit(ERR_WRONG_PAR_SHIFT);
     }
 }
@@ -406,6 +418,7 @@ int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature) {
 
     printf("Attempt to initialize var with unknown identifier '%s' at line %d.\n", id_init.token.str, id_init.line);
     printf("program exit code (%d).", ERR_UNDECLARED);
+    libera(arvore);
     exit(ERR_UNDECLARED);  
 }
 void validate_err_declared_symbol(symtable_content content, char* symtable_key, int nature) {
@@ -417,6 +430,7 @@ void validate_err_declared_symbol(symtable_content content, char* symtable_key, 
         print_nature_str(content.nature); cout<<") is already in use at ln "<<table_entry->second->lin<<", col "<<table_entry->second->col<<" (";
         print_nature_str(table_entry->second->nature); cout<<").\n";
         printf("program exit code (%d).", ERR_DECLARED);
+        libera(arvore);
         exit(ERR_DECLARED);
     }    
 }
@@ -435,14 +449,17 @@ void validate_nature(int expected_n, int actual_n, int line) {
     if(expected_n == VAR_N && (actual_n == VEC_N || actual_n == FUNC_N)) {
         cout << "Attempt to use 'VARIABLE' as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
         printf("program exit code (%d).", ERR_VARIABLE);
+        libera(arvore);
         exit(ERR_VARIABLE);  
     } if(expected_n == VEC_N && (actual_n == VAR_N || actual_n == FUNC_N)) {
         cout << "Attempt to use 'VECTOR' as '";print_nature_str(actual_n);cout<<"' at ln " << line <<", col " << get_col_number() << ".\n";
         printf("program exit code (%d).", ERR_VECTOR);
-        exit(ERR_VECTOR);  
+        libera(arvore);
+        exit(ERR_VECTOR); 
     } if(expected_n == FUNC_N && (actual_n == VAR_N || actual_n == VEC_N)) {
         cout << "Attempt to use 'FUNCTION' as '";print_nature_str(actual_n);cout<<"' at ln " << line << endl;
         printf("program exit code (%d).", ERR_FUNCTION);
+        libera(arvore);
         exit(ERR_FUNCTION);  
     }
 }
@@ -452,6 +469,7 @@ void validate_size(symtable_content content_max, symtable_content content_receiv
         cout << "Attempt to initialize variable '"<<content_max.token_value_data.str<<"' with content exceedind its maximum bytes size ("<<content_max.size<<") ";
         cout<<"set at ln " << content_max.lin << ", col " << content_max.col << ".\n";
         printf("program exit code (%d).", ERR_STRING_MAX);
+        libera(arvore);
         exit(ERR_STRING_MAX);  
     }
 }
@@ -459,6 +477,7 @@ void validate_not_string_vector(int type, int nature, symtable_content content, 
     if(type == STRING_T && nature == VEC_N) {
         printf("Attempt to declare '%s' as a vector of type string at ln %d, col %d. String type does not support vectors.\n", symtable_key, content.lin, content.col);
         printf("program exit code (%d).", ERR_STRING_VECTOR);
+        libera(arvore);
         exit(ERR_STRING_VECTOR);
     }    
 }
@@ -467,6 +486,7 @@ void validate_err_function_string(int type, int line, int col) {
     if(type == STRING_T) {
         printf("Error ln %d, col %d: type of the return or parameters of a function cannot be <string>.\n", line, col);
         printf("program exit code (%d).", ERR_FUNCTION_STRING);
+        libera(arvore);
         exit(ERR_FUNCTION_STRING); 
     }
 }
@@ -497,21 +517,25 @@ int get_inferred_type_validate_char_string(int type1, int type2, int lin, int co
     if(type1 == CHAR_T) {
         cout << "Attempt to coerce variable of type <char> to type <";print_type_str(type2);cout <<"> at ln "<<lin<<", col "<<col<<".\n";
         printf("program exit code (%d).", ERR_CHAR_TO_X);
+        libera(arvore);
         exit(ERR_CHAR_TO_X);
     }
     if(type2 == CHAR_T) {
         cout << "Attempt to coerce variable of type <char> to type <";print_type_str(type1);cout <<"> at ln "<<lin<<", col "<<col<<".\n";
         printf("program exit code (%d).", ERR_CHAR_TO_X);
+        libera(arvore);
         exit(ERR_CHAR_TO_X);
     }
     if(type1 == STRING_T) {
         cout << "Attempt to coerce variable of type <string> to type <";print_type_str(type2);cout <<"> at ln "<<lin<<", col "<<col<<".\n";
         printf("program exit code (%d).", ERR_STRING_TO_X);
+        libera(arvore);
         exit(ERR_STRING_TO_X);
     }
     if(type2 == STRING_T) {
         cout << "Attempt to coerce variable of type <string> to type <";print_type_str(type1);cout <<"> at ln "<<lin<<", col "<<col<<".\n";
         printf("program exit code (%d).", ERR_STRING_TO_X);
+        libera(arvore);
         exit(ERR_STRING_TO_X);
     }
 
