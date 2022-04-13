@@ -31,7 +31,6 @@ void local_init_types_validate_and_add_to_scope(int type) {
     } else {
         scopes.front().insert(deepcopy_table.begin(), deepcopy_table.end());
     }
-    //print_scopes();
     undefined_type_entries.clear();
 }
 void global_init_types_and_add_to_scope(int type) 
@@ -148,16 +147,20 @@ void create_func_entry_with_args(struct lex_value_t *identifier, int type, int n
 void collect_arg(struct lex_value_t *identifier, int type) {
     validate_err_function_string(type, get_line_number(), get_col_number());
 
-    arguments_collector.push_back((struct argument){
-        .id = strdup(identifier->token.str), 
-        .type = type, 
-        .col = get_col_number(), 
-        .lin = get_line_number()
-    });
+    if(identifier != NULL) {
+        arguments_collector.push_back((struct argument){
+            .id = strdup(identifier->token.str), 
+            .type = type, 
+            .col = get_col_number(), 
+            .lin = get_line_number()
+        });
+    }
 }
 
 void collect_param(struct node *lit) {
-    parameters_collector.push_back(lit);
+    if(lit != NULL) {
+        parameters_collector.push_back(lit);
+    }
 }
 
 void declare_id_entry_missing_type(struct lex_value_t *identifier)
@@ -236,9 +239,11 @@ void add_symtable_lit(struct lex_value_t *lit) {
             lit->token.boolean == TRUE ? key = strdup("true") : key = strdup("false");
             break;
         case LIT_CHAR:
-            key = (char*)malloc(2*sizeof(char));
-            key[0] = lit->token.character;
-            key[1] = '\0';
+            key = (char*)malloc(4*sizeof(char));
+            key[0] = '\'';
+            key[1] = lit->token.character;
+            key[2] = '\'';
+            key[3] = '\0';
             break;
         case LIT_FLOAT:
             key = strdup(to_string(lit->token.flt).c_str());
@@ -247,11 +252,12 @@ void add_symtable_lit(struct lex_value_t *lit) {
             key = strdup(to_string(lit->token.integer).c_str());
             break;
         case LIT_STR:
-            key = strdup(lit->token.str);
+            key = strcat(strcat(strdup("\""), strdup(lit->token.str)), "\"");
             break;
     }
 
-    scopes.front().insert(entry(strdup(key), new_c));
+    // adiciona literais no escopo global
+    scopes.back().insert(entry(strdup(key), new_c));
     free(key);
 }
 
@@ -277,7 +283,8 @@ symtable_content* validate_attr_id(char* symtable_key, int line, int col)
 {
     for(auto scope = scopes.begin(); scope!= scopes.end(); scope++) {
         auto table_entry = scope->find(symtable_key);
-        if(table_entry!= scope->end()) {
+        if(table_entry != scope->end())
+        {
             return table_entry->second;
         }
     }
@@ -285,7 +292,6 @@ symtable_content* validate_attr_id(char* symtable_key, int line, int col)
     printf("program exit code (%d).", ERR_UNDECLARED);
     libera(arvore);
     exit(ERR_UNDECLARED); 
-    libera(arvore);
 }
 void validate_attr_expr(lex_value_t* id, int nature, struct node* expr)
 {
@@ -294,18 +300,17 @@ void validate_attr_expr(lex_value_t* id, int nature, struct node* expr)
 
     if(expr->value->type == ID) {
         symtable_content* expr_content = validate_attr_id(expr->value->token.str, expr->value->line, get_col_number());
-        if(id_content->type != expr_content->type && (id_content->type == CHAR_T || id_content->type == STRING_T || expr_content->type == CHAR_T || expr_content->type == STRING_T))
-        {
-            cout << "Attempt to attribute variable of type <";print_type_str(id_content->type);cout<<"> to type <";print_type_str(expr_content->type);
-            cout <<"> at ln "<<id_content->lin<<", col "<<id_content->col<<".\n";
-            printf("program exit code (%d).", ERR_WRONG_TYPE);
-            libera(arvore);
-            exit(ERR_WRONG_TYPE);
-        }
         validate_nature(expr_content->nature, VAR_N, get_line_number());
         validate_size(*id_content, *expr_content);
     }
- 
+    if(id_content->type != expr->type && (id_content->type == CHAR_T || id_content->type == STRING_T || expr->type == CHAR_T || expr->type == STRING_T))
+    {
+        cout << "Attempt to attribute variable of type <";print_type_str(id_content->type);cout<<"> to type <";print_type_str(expr->type);
+        cout <<"> at ln "<<id_content->lin<<", col "<<id_content->col<<".\n";
+        printf("program exit code (%d).", ERR_WRONG_TYPE);
+        libera(arvore);
+        exit(ERR_WRONG_TYPE);
+    }
     validate_attr_vec_acess(expr);
 }
 void validate_attr_vec_acess(struct node* expr) {
@@ -352,7 +357,14 @@ void validate_output_lit(int type){
     }
 }
 void validate_return(int type){
-    if(type != expected_ret_type)
+    if(type != expected_ret_type && (type == STRING_T || expected_ret_type == STRING_T))
+    {
+        cout << "<string> is not supported as return type; found at line " << get_line_number() << ".\n";
+        printf("program exit code (%d).", ERR_FUNCTION_STRING);
+        libera(arvore);
+        exit(ERR_FUNCTION_STRING);
+    }
+    if(type != expected_ret_type && (type == CHAR_T || expected_ret_type == CHAR_T))
     {
         cout << "Wrong return type <";print_type_str(type);cout<<"> at line " << get_line_number() << ". Function expected <";
         print_type_str(expected_ret_type); cout<<">.\n";
@@ -364,6 +376,7 @@ void validate_return(int type){
 void validate_func_cal_parameters(struct lex_value_t *func)
 {
     symtable_content* func_content = validate_attr_id(func->token.str, func->line, get_col_number());
+
     if(func_content->arguments.size() > parameters_collector.size())
     {
         cout << "Function '"<<func_content->token_value_data.str<<"' expected "<<func_content->arguments.size()<<" arguments, ";
@@ -384,7 +397,21 @@ void validate_func_cal_parameters(struct lex_value_t *func)
     reverse(parameters_collector.begin(), parameters_collector.end());
     for(auto arg = func_content->arguments.begin(); arg != func_content->arguments.end(); arg++)
     {
-        get_inferred_type_validate_char_string(arg->type, parameters_collector[i]->type, func->line, get_col_number());
+        if(arg->type != parameters_collector[i]->type && (arg->type == STRING_T || parameters_collector[i]->type == STRING_T))
+        {
+            cout << "Parameter of type <string> passed to function at line " << get_line_number() << " is not supported.\n";
+            printf("program exit code (%d).", ERR_FUNCTION_STRING);
+            libera(arvore);
+            exit(ERR_FUNCTION_STRING);
+        }
+        if(arg->type != parameters_collector[i]->type && (arg->type == CHAR_T || parameters_collector[i]->type == CHAR_T))
+        {
+            cout << "Wrong parameter type <";print_type_str(parameters_collector[i]->type);cout<<"> at line " << get_line_number() << ". Function expected <";
+            print_type_str(arg->type); cout<<">.\n";
+            printf("program exit code (%d).", ERR_WRONG_TYPE_ARGS);
+            libera(arvore);
+            exit(ERR_WRONG_TYPE_ARGS);
+        }
         i++;
     }
 
@@ -481,8 +508,8 @@ void validate_not_string_vector(int type, int nature, symtable_content content, 
         exit(ERR_STRING_VECTOR);
     }    
 }
-void validate_err_function_string(int type, int line, int col) {
-    
+void validate_err_function_string(int type, int line, int col)
+{    
     if(type == STRING_T) {
         printf("Error ln %d, col %d: type of the return or parameters of a function cannot be <string>.\n", line, col);
         printf("program exit code (%d).", ERR_FUNCTION_STRING);
