@@ -110,7 +110,7 @@ command_block:
     | %empty                    { $$ = NULL; };
 
 command: 
-    '{'command_block'}'     { push_scope(); $$ = $2; pop_scope(); }
+    '{' { push_scope(); } command_block'}'     { $$ = $3; pop_scope(); }
     | dec_var_local         { $$ = $1; }
     | attr                  { $$ = $1; }
     | input                 { $$ = $1; }
@@ -180,15 +180,15 @@ shift_op:
 
 return: TK_PR_RETURN expr   { $$ = createParentNode1Child(lexToNode($1), $2); validate_return($2->type); };
 
-if_then_else_opt: TK_PR_IF'('expr')' '{' command_block '}' else_opt { $$ = createParentNode3Children(lexToNode($1), $3, $6, $8); };
+if_then_else_opt: TK_PR_IF'('expr')' '{' { push_scope(); } command_block '}' else_opt { $$ = createParentNode3Children(lexToNode($1), $3, $7, $9); pop_scope(); };
 else_opt: 
-    TK_PR_ELSE '{'command_block'}'  { $$ = $3; }
+    TK_PR_ELSE '{' { push_scope(); } command_block'}'  { $$ = $4; pop_scope(); }
     | %empty                        { $$ = NULL; };
 
 for_block: 
-    TK_PR_FOR'(' attr ':' expr ':' attr ')' '{' command_block '}'   { $$ = createParentNode4Children(lexToNode($1), $3, $5, $7, $10); };
+    TK_PR_FOR'(' attr ':' expr ':' attr ')' '{' { push_scope(); } command_block '}'   { $$ = createParentNode4Children(lexToNode($1), $3, $5, $7, $11);  pop_scope(); };
 
-while_block: TK_PR_WHILE'(' expr ')' TK_PR_DO '{' command_block '}' { $$ = createParentNode2Children(lexToNode($1), $3, $7); };
+while_block: TK_PR_WHILE'(' expr ')' TK_PR_DO '{' { push_scope(); } command_block '}' { $$ = createParentNode2Children(lexToNode($1), $3, $8); pop_scope(); };
 
 expr: 
     logical_or_or_and '?' expr ':' expr     { $$ = createParentNode3Children(lexToNode(lexValueFromOC("?:")), $1, $3, $5); ; $$->type = get_inferred_type_node($3, $5); }
@@ -218,16 +218,16 @@ compare_or_sum:
     | sum_sub_or_mult_div_or_pow                             { $$ = $1; };  
 
 sum_sub_or_mult_div_or_pow: 
-    sum_sub_or_mult_div_or_pow '+' mult_div_or_pow       { $$ = createParentNode2Children(lexToNode(lexValueFromSC('+')), $1, $3); get_inferred_type_node($1, $3); }
-    | sum_sub_or_mult_div_or_pow '-' mult_div_or_pow     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('-')), $1, $3); get_inferred_type_node($1, $3); }
+    sum_sub_or_mult_div_or_pow '+' mult_div_or_pow       { $$ = createParentNode2Children(lexToNode(lexValueFromSC('+')), $1, $3); $$->type = get_inferred_type_node($1, $3); }
+    | sum_sub_or_mult_div_or_pow '-' mult_div_or_pow     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('-')), $1, $3); $$->type = get_inferred_type_node($1, $3); }
     | mult_div_or_pow                                    { $$ = $1; };  
 mult_div_or_pow: 
-    mult_div_or_pow '*' pow_or_op       { $$ = createParentNode2Children(lexToNode(lexValueFromSC('*')), $1, $3); get_inferred_type_node($1, $3); }
-    | mult_div_or_pow '/' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('/')), $1, $3); get_inferred_type_node($1, $3); }
-    | mult_div_or_pow '%' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('%')), $1, $3); get_inferred_type_node($1, $3); }
+    mult_div_or_pow '*' pow_or_op       { $$ = createParentNode2Children(lexToNode(lexValueFromSC('*')), $1, $3); $$->type = get_inferred_type_node($1, $3); }
+    | mult_div_or_pow '/' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('/')), $1, $3); $$->type = get_inferred_type_node($1, $3); }
+    | mult_div_or_pow '%' pow_or_op     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('%')), $1, $3); $$->type = get_inferred_type_node($1, $3); }
     | pow_or_op                         { $$ = $1; };
 pow_or_op: 
-    pow_or_op '^' unary_expr            { $$ = createParentNode2Children(lexToNode(lexValueFromSC('^')), $1, $3); get_inferred_type_node($1, $3); }
+    pow_or_op '^' unary_expr            { $$ = createParentNode2Children(lexToNode(lexValueFromSC('^')), $1, $3); $$->type = get_inferred_type_node($1, $3); }
     | unary_expr                        { $$ = $1; };
 
 unary_expr: 
