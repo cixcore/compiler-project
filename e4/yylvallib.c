@@ -5,6 +5,7 @@
 #include "yylvallib.h"
 
 extern int get_line_number();
+extern int get_col_number();
 
 void alloc_lex_value(int type) {
     yylval.valor_lexico = (struct lex_value_t*)malloc(sizeof(struct lex_value_t));

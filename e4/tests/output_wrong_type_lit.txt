@@ -1,0 +1,5 @@
+static int func (int a){
+	output 1;
+	output -2.3;
+	output "tres";
+}

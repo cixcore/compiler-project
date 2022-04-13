@@ -1,0 +1,16 @@
+static int globalint, global2, global3;
+static string global;
+
+static int foo(int counter){
+	while (counter + 7 < 10) do {
+		output counter;
+		counter = counter + 1;
+	};
+}
+
+static int foo(int counter){
+	counter = 11;
+	while(counter < 10) do {};
+}
+
+static string foo(){}

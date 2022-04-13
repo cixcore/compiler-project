@@ -1,0 +1,4 @@
+static int func (int a){
+	string kk <= "123", jj<="1234";
+	kk = jj;
+}

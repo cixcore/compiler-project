@@ -1,0 +1,6 @@
+static int vec[3];
+string tres, quatro;
+static int func (int a){
+	int i;
+	i[1] = vec;
+}

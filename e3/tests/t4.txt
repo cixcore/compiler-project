@@ -1,0 +1,3 @@
+static int func (){
+	fexp = f() > 10 ? g() : **a;
+}

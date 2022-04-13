@@ -3,11 +3,27 @@
     #include "parser.tab.h"
     #include "yylvallib.h"
     int get_line_number();
-%}
 
+int yycolumn = 1;
+#define YY_USER_ACTION                                                          \
+    start_line = prev_yylineno;                                                 \
+    start_column = yycolumn;                                                    \
+    if (yylineno == prev_yylineno) {                                            \
+        yycolumn += yyleng;                                                     \
+    } else {                                                                    \
+        yycolumn = 1;                                                           \
+        while (yytext[yyleng - yycolumn] != '\n') {                             \
+            yycolumn++;                                                         \
+        }                                                                       \
+        prev_yylineno = yylineno;                                               \
+    }                                                                           
+%}
+%option noyywrap nounput noinput
 %option yylineno
 
 %%
+   int start_line, start_column;
+   int prev_yylineno = yylineno;
 
 "int"           return TK_PR_INT;
 "float"         return TK_PR_FLOAT;
@@ -84,4 +100,8 @@
 
 int get_line_number(){
     return yylineno;
+}
+
+int get_col_number(){
+    return yycolumn;
 }
