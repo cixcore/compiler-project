@@ -62,6 +62,7 @@
 %type<nodo> program func command_block command dec_var_local var_local_list var_local literal attr input output func_call 
 %type<nodo> shift shift_op return if_then_else_opt else_opt for_block while_block expr logical_or_or_and logical_and_or_bit_or bit_or_or_bit_and 
 %type<nodo> bit_and_or_eq eq_neq_or_compare compare_or_sum sum_sub_or_mult_div_or_pow mult_div_or_pow pow_or_op unary_expr operand unsigned_literal opt_unary_operator
+%type<nodo> func_call_parameter func_call_parameters_list
 
 %%
 
@@ -79,8 +80,8 @@ var_global_list:
     var_global ',' var_global_list 
     | var_global;
 var_global: 
-    TK_IDENTIFICADOR 
-    | TK_IDENTIFICADOR '[' TK_LIT_INT ']';
+    TK_IDENTIFICADOR                          { free_lex_val($1); }
+    | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { free_lex_val($1); free_lex_val($3); };
 
 func: static type TK_IDENTIFICADOR '('parameters')' '{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $8); };
 
@@ -90,7 +91,7 @@ parameters:
 parameters_list: 
     parameter ',' parameters_list 
     | parameter;
-parameter: const type TK_IDENTIFICADOR;
+parameter: const type TK_IDENTIFICADOR  { free_lex_val($3); };
 const: 
     TK_PR_CONST 
     | %empty;
@@ -119,7 +120,7 @@ var_local_list:
     var_local ',' var_local_list                { $$ = connect($1, $3); }
     | var_local                                 { $$ = $1; };
 var_local: 
-    TK_IDENTIFICADOR                                { $$ = NULL; }    
+    TK_IDENTIFICADOR                                { free_lex_val($1); $$ = NULL; }
     | TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR    { $$ = createParentNode2Children(lexToNode($2), lexToNode($1), lexToNode($3)); }
     | TK_IDENTIFICADOR TK_OC_LE literal             { $$ = createParentNode2Children(lexToNode($2), lexToNode($1), $3); };
 
@@ -145,9 +146,17 @@ output:
     TK_PR_OUTPUT TK_IDENTIFICADOR        { $$ = createParentNode1Child(lexToNode($1), createLeaf($2)); }
     | TK_PR_OUTPUT literal               { $$ = createParentNode1Child(lexToNode($1), $2); };
 
-func_call: TK_IDENTIFICADOR '('func_call_parameters_list')'    { $$ = createFuncCallLeaf($1); };
-func_call_parameters_list: func_call_parameter ',' func_call_parameters_list | func_call_parameter;
-func_call_parameter: expr | %empty;
+func_call: TK_IDENTIFICADOR '('func_call_parameters_list')'     { $$ = createParentNode1Child(createFuncCallNode($1), $3); };
+func_call_parameters_list: 
+	func_call_parameter ',' func_call_parameters_list 	{ $$ = connect($1, $3); }
+	| func_call_parameter					            { $$ = $1; };
+func_call_parameter: 
+	expr 							{ $$ = $1; }
+	| TK_LIT_CHAR 					{ $$ = createLeaf($1); }
+	| TK_LIT_STRING 				{ $$ = createLeaf($1); }
+	| TK_LIT_FALSE 					{ $$ = createLeaf($1); }
+	| TK_LIT_TRUE 					{ $$ = createLeaf($1); }
+	| %empty						{ $$ = NULL; };
 
 shift: 
     TK_IDENTIFICADOR shift_op TK_LIT_INT                    { $$ = createParentNode2Children($2, lexToNode($1), lexToNode($3)); }
@@ -221,13 +230,13 @@ unsigned_literal:
     | TK_LIT_FLOAT               { $$ = createLeaf($1); };
 
 opt_unary_operator: 
-    '+'                    { $$ = createLeaf(lexValueFromSC('+')); }
-    | '-'                  { $$ = createLeaf(lexValueFromSC('-')); }
-    | '!'                  { $$ = createLeaf(lexValueFromSC('!')); }
-    | '&'                  { $$ = createLeaf(lexValueFromSC('&')); }
-    | '*'                  { $$ = createLeaf(lexValueFromSC('*')); }
-    | '?'                  { $$ = createLeaf(lexValueFromSC('?')); }
-    | '#'                  { $$ = createLeaf(lexValueFromSC('#')); };
+    '+'                    { $$ = lexToNode(lexValueFromSC('+')); }
+    | '-'                  { $$ = lexToNode(lexValueFromSC('-')); }
+    | '!'                  { $$ = lexToNode(lexValueFromSC('!')); }
+    | '&'                  { $$ = lexToNode(lexValueFromSC('&')); }
+    | '*'                  { $$ = lexToNode(lexValueFromSC('*')); }
+    | '?'                  { $$ = lexToNode(lexValueFromSC('?')); }
+    | '#'                  { $$ = lexToNode(lexValueFromSC('#')); };
 
 
 %%

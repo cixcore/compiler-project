@@ -1,0 +1,9 @@
+int foo(const int a, const float b, const char c, const bool d, const string e){
+	static const int var;
+	static int var;
+	int var;
+	int var_a <= 0;
+	static const float var <= 'c';
+	static float var <= var_2;
+	static const int a, b, c, d <= 10, e, f <= b;
+}

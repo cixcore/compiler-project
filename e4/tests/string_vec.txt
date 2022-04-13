@@ -1,0 +1,2 @@
+static int um, dois[3];
+string tres, quatro[1];

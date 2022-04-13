@@ -1,0 +1,8 @@
+static int um;
+float dois;
+char tres;
+static int func (int a){
+	output um;
+	output dois;
+	output tres;
+}
