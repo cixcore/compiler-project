@@ -1,13 +1,19 @@
+#include "parser.tab.h"
+#include "yylvallib.h"
+#include "tree.h"
+#include "types.h"
 #include "ilocgen.h"
 #include "tree.h"
 #include "types.h"
 
 using namespace std;
 
+using namespace std;
+
 int reg_counter = 0;
 int label_counter = 0;
 int mainFunct;
-struct label_list_t* label_list = NULL;
+label_stack func_labels;
 
 int newRegister() {
     return reg_counter++;
@@ -17,7 +23,9 @@ int newLabel() {
     return label_counter++;
 }
 
-void generate_iloc(struct node* root){}
+void generate_iloc(void *root){
+    struct node* tree = (struct node*) root;
+}
 
 void funcDecCode(struct node* node1, struct lex_value_t* func) {
 
@@ -48,21 +56,16 @@ void funcDecCode(struct node* node1, struct lex_value_t* func) {
         node1->codeEnd = updated_rsp;
     }
 
-    struct label_list_t* new_label = new label_list_t;
-    new_label->funcName = strdup(node1->value->token.str);
-    new_label->label = label;
-    new_label->next = label_list;
-    label_list = new_label;
+    func_labels.push_front(make_pair(strdup(node1->value->token.str), label));
 }
 
 int getFuncLabel(char* func) {
-    struct label_list_t* aux = label_list;
-    while(aux != NULL) {
-        if(strcmp(func, aux->funcName) == 0) {
-            return aux->label;
+    for(auto fun = func_labels.begin(); fun != func_labels.end(); fun++) {
+        if(strcmp(func, fun->first) == 0) {
+            return fun->second;
         }
-        aux = aux->next;
     }
+    return -1;
 }
 
 struct instr* codeLabel(int label) {
@@ -95,26 +98,24 @@ void setMain(struct lex_value_t* funcName) {
 
 void createLabelFunc(struct lex_value_t* func){
     int label = newLabel();
-    struct label_list_t* newLabel = new label_list_t;
-    newLabel->funcName = strdup(func->token.str);
-    newLabel->label = label;
-    newLabel->next = label_list;
-    label_list = newLabel;
+    func_labels.push_front(make_pair(strdup(func->token.str), label));
 }
 
 void initCode(struct node* node1) {
     struct node* aux = node1;
 
-    while(aux != NULL) {
-        //storeVar
-
+    storeVar(aux, aux->children[0]->value, aux->children[1]);
+    if(aux != node1)
+    {  
+        node1->codeEnd->next = aux->code;
+        node1->codeEnd = aux->codeEnd;
     }
+    aux = aux->next;
 }
 
 void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp) {
     int scope;
     int offset = getDesloc(var->token.str, &scope);
 
-    int base;
-    
+    int base = scope == GLOBAL ? RBSS : RFP;
 }

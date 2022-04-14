@@ -32,16 +32,13 @@
 #define HALT    20
 #define ADDI    21
 
-struct label_list_t{
-    char* funcName;
-    int label;
-    struct label_list_t* next;
-};
+using label_stack = std::list<std::pair<char*, int>>;
+
 
 int newRegister();
 int newLabel();
 
-void generate_iloc(struct node* root);
+void generate_iloc(void* root);
 void funcDecCode(struct node* node1, struct lex_value_t* func);
 int getFuncLabel(char* func);
 void createLabelFunc(struct lex_value_t* func);
