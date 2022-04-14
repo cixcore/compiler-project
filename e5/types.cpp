@@ -664,7 +664,7 @@ int getDesloc(char* id, int* scope) {
     for(auto auxScope = scopes.begin(); auxScope!= scopes.end(); auxScope++) {
         auto table_entry = auxScope->find(id);
         if(table_entry != auxScope->end()) {
-            if(auxScope == scopes.back()) {
+            if(*auxScope == scopes.back()) {
                 *scope = GLOBAL;
             }
             return table_entry->second->offset;

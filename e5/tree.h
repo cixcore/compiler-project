@@ -10,7 +10,7 @@ struct instr{
     int arg2;
     int arg3;
     struct instr* next;
-}
+};
 
 
 struct node{

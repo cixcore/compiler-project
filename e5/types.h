@@ -17,6 +17,9 @@
 #define CHAR_SIZE_BYTES     1
 #define BOOL_SIZE_BYTES     1
 
+#define GLOBAL 0
+#define LOCAL 1
+
 struct cmp_char_array {
    bool operator()(char const *a, char const *b) const {
       return std::strcmp(a, b) < 0;
