@@ -2,11 +2,27 @@
 #define MAX_CHILDREN 4
 
 
+
+struct instr{
+    int label;
+    int op;
+    int arg1;
+    int arg2;
+    int arg3;
+    struct instr* next;
+}
+
+
 struct node{
     int type;
     struct lex_value_t* value;
     struct node* children[MAX_CHILDREN];
     struct node* next;
+
+    struct instr* code;
+    struct instr* codeEnd;
+    int temp;
+    //list?
 };
 
 
@@ -32,3 +48,7 @@ struct node* createFuncCallNode(struct lex_value_t* lex_value);
 
 struct lex_value_t* lexValueFromSC(char schar);
 struct lex_value_t* lexValueFromOC(const char* schar);
+
+
+void codeConcat(struct node* root);
+void codeConcatCommands(struct node* node1, struct node* node1next);

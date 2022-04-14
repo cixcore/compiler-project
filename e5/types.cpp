@@ -8,6 +8,7 @@
 using namespace std;
 
 list<symbols_table> scopes;
+list<int> scope_deslocs;
 symbols_table undefined_type_entries;
 vector<argument> arguments_collector;
 vector<node*> parameters_collector;
@@ -658,41 +659,16 @@ void print_nature_str(int nature) {
     }
 }
 
-/*
-char* type_str(int type) {
-    switch (type) {
-        case INT_T:
-            return string_to_char_array("int");
-        case BOOL_T:
-            return string_to_char_array("bool");
-        case FLOAT_T:
-            return string_to_char_array("float");
-        case CHAR_T:
-            return string_to_char_array("char");
-        case STRING_T:
-            return string_to_char_array("string");
-        
-        default:
-            return string_to_char_array("undefined");
+int getDesloc(char* id, int* scope) {
+    *scope = LOCAL;
+    for(auto auxScope = scopes.begin(); auxScope!= scopes.end(); auxScope++) {
+        auto table_entry = auxScope->find(id);
+        if(table_entry != auxScope->end()) {
+            if(auxScope == scopes.back()) {
+                *scope = GLOBAL;
+            }
+            return table_entry->second->offset;
+        }
     }
+    return -1;
 }
-char* string_to_char_array(const char* str) {
-    char * charr;
-    strcpy(charr, str);
-    return strdup(charr);
-}
-char* nature_str(int nature) {
-    switch (nature) {
-        case VAR_N:
-            return string_to_char_array("VAR");
-        case VEC_N:
-            return string_to_char_array("VECTOR");
-        case FUNC_N:
-            return string_to_char_array("FUNCTION");
-        case LIT_N:
-            return string_to_char_array("LITERAL");
-        default:
-            return string_to_char_array("");
-    }
-}
-*/
