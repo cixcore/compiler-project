@@ -72,7 +72,7 @@
 
 program: 
     program dec_var_global  { $$ = $1; }
-    | program func          { createRoot($1, $2); $$ = $2; }
+    | program func          { createRoot($1, $2); $$ = $2; codeConcat($1); }
     | %empty                { $$ = NULL; };
 
 dec_var_global: static type var_global_list ';'  { global_init_types_and_add_to_scope($2); };
@@ -92,7 +92,7 @@ var_global:
     TK_IDENTIFICADOR                          { declare_id_entry_missing_type($1); free_lex_val($1); }
     | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { declare_vector_entry_missing_type($1, $3); free_lex_val($1); free_lex_val($3); };
 
-func: static type TK_IDENTIFICADOR '('parameters')'{ create_func_entry_with_args($3, $2, FUNC_N); }'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); pop_scope(); };
+func: static type TK_IDENTIFICADOR '('parameters')'{ create_func_entry_with_args($3, $2, FUNC_N); setMain($3); createLabelFunc($3) }'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); funcDecCode($$, $3) pop_scope(); };
 
 parameters: 
     parameters_list 
@@ -106,7 +106,7 @@ const:
     | %empty;
 
 command_block: 
-    command ';' command_block   { $$ = connect($1, $3); }
+    command ';' command_block   { $$ = connect($1, $3); codeConcatCommands($1,$3); }
     | %empty                    { $$ = NULL; };
 
 command: 
@@ -124,7 +124,7 @@ command:
     | for_block             { $$ = $1; }
     | while_block           { $$ = $1; };
 
-dec_var_local: static const type var_local_list { $$ = $4; local_init_types_validate_and_add_to_scope($3); };
+dec_var_local: static const type var_local_list { $$ = $4; local_init_types_validate_and_add_to_scope($3); initCode($$); };
 var_local_list: 
     var_local ',' var_local_list                { $$ = connect($1, $3); }
     | var_local                                 { $$ = $1; };

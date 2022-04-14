@@ -25,6 +25,7 @@ struct cmp_char_array {
 using symbols_table = std::map<char*, struct symtable_content*, cmp_char_array>;
 using entry = std::pair<char*, struct symtable_content*>;
 
+
 struct argument {
     char* id;
     int type;
@@ -33,6 +34,7 @@ struct argument {
 };
 
 struct symtable_content {
+    int offset;
     int lin;
     int col;
     int nature;
@@ -91,6 +93,8 @@ void print_scopes();
 void print_undef();
 void print_type_str(int type);
 void print_nature_str(int nature);
+
+int getDesloc(char* id, int* scope);
 /*
 char* type_str(int type);
 char* nature_str(int nature);
