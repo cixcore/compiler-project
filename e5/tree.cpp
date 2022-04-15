@@ -1,11 +1,10 @@
 /* Grupo H - Carlos Morvan Santiago, Maria Cecília Corrêa */
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include "tree.h"
 #include "parser.tab.h"
 #include "yylvallib.h"
+#include "tree.h"
 #include "types.h"
+
+using namespace std;
 
 void exporta(void *tree)
 {

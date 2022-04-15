@@ -10,6 +10,8 @@ using namespace std;
 
 using namespace std;
 
+using namespace std;
+
 int reg_counter = 0;
 int label_counter = 0;
 int mainFunct;
@@ -113,11 +115,70 @@ void initCode(struct node* node1) {
     aux = aux->next;
 }
 
+void loadVar(struct node* no, char* id){
+    int scope;
+    int offset = getOffset(id, &scope);
+
+    int base = scope == GLOBAL ? RBSS : RFP;
+
+    int reg = newRegister();
+    no->code = newInstr(LOADAI, base, offset, reg);
+    no->codeEnd = no->code;
+    no->temp = reg;
+}
+
+void loadLit(struct node* no){
+    int reg = newRegister();
+    no->code = newInstr(LOADI, no->value->token.integer, reg, NU);
+    no->codeEnd = no->code;
+    no->temp = reg;
+}
+
 void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp) {
     int scope;
     int offset = getOffset(var->token.str, &scope);
 
     int base = scope == GLOBAL ? RBSS : RFP;
+}
+
+void ifCode(struct node* parent) {
+    int label_true  = newLabel();
+    int label_false = newLabel();
+
+    patch(parent->children[0]->patchTrue, label_true);
+    patch(parent->children[0]->patchFalse, label_false);
+
+    struct instr* label_true_code = codeLabel(label_true);
+    struct instr* label_false_code = codeLabel(label_false);
+
+    parent->children[0]->codeEnd->next = label_true_code;
+    if(parent->children[1] != NULL) {
+        label_true_code->next = parent->children[1]->code;
+        parent->children[1]->codeEnd->next = label_false_code;
+    } else {
+        label_true_code->next = label_false_code;
+    }
+    parent->codeEnd = label_false_code; 
+
+    if(parent->children[2] != NULL) { 
+        int label_next = newLabel();
+        struct instr* label_next_code = codeLabel(label_next); // Codigo do label para a inst depois do if else
+        struct instr* end_then = newInstr(JUMPI, label_next, NU, NU);
+        struct instr* end_else = newInstr(JUMPI, label_next, NU, NU);
+
+        if(parent->children[1] != NULL){
+            parent->children[1]->codeEnd->next = end_then;
+        }else{
+            label_true_code->next = end_then;
+        }
+        end_then->next = label_false_code;
+        label_false_code->next = parent->children[2]->code;
+        parent->children[2]->codeEnd->next = end_else;
+        end_else->next = label_next_code;
+        parent->codeEnd = label_next_code;  
+    }
+
+    parent->code = parent->children[0]->code;
 }
 
 void codeFor(struct node* node1) {
@@ -132,7 +193,7 @@ void codeFor(struct node* node1) {
     struct instr* code_true = codeLabel(label_true);
     struct instr* code_false = codeLabel(label_false);
 
-    struct instr* code_jump_for = newInstr(JUMPI, start_for, NU, NU);
+    struct instr* code_jump_for = newInstr(JUMPI, for_start, NU, NU);
 
     node1->children[0]->codeEnd->next = code_for;
     code_for->next = node1->children[1]->code;
@@ -180,8 +241,75 @@ void codeWhile(struct node* node1) {
     node1->codeEnd = code_false;
 }
 
+void funcCallCode(struct node* node1){
+    struct instr* store_rsp = newInstr(STOREAI, RSP, RSP, 4);     // Salva o RSP
+    struct instr* store_rfp = newInstr(STOREAI, RFP, RSP, 8);     // Salva o RFP
+    store_rsp->next = store_rfp;
+
+    int offset = 16; 
+    struct node* param = node1->children[0];
+    struct instr* end = store_rfp;
+
+    while(param != NULL){
+        struct instr* param_store = newInstr(STOREAI, param->temp, RSP, offset);
+
+        end->next = param->code;
+        param->codeEnd->next = param_store;
+
+        offset += INT_SIZE_BYTES; // só int na e5
+        end = param_store;
+        param = param->next;
+    }
+
+    int return_addr = newRegister();
+    struct instr* l_return_addr = newInstr(ADDI, RPC, 3, return_addr);
+    struct instr* s_return_addr = newInstr(STOREAI, return_addr, RSP, 0); 
+    end->next = l_return_addr;
+    l_return_addr->next = s_return_addr;
+
+    int label = getFuncLabel(node1->value->token.str);
+    struct instr* jump = newInstr(JUMPI, label, NU, NU);
+    s_return_addr->next = jump;
+
+    int return_value = newRegister();
+    struct instr* l_ret = newInstr(LOADAI, RSP, 12, return_value);
+    jump->next = l_ret;
+
+    node1->code = store_rsp;
+    node1->codeEnd = l_ret;
+    node1->temp = return_value;
+}
+
+void returnCode(struct node* node1)
+{
+    if(mainFunct == TRUE) {
+        struct instr* halt = newInstr(HALT, NU, NU, NU);
+        node1->children[0]->codeEnd->next = halt;
+
+        node1->code = node1->children[0]->code;
+        node1->codeEnd = halt;
+    } else {        
+        int temp = newRegister();
+
+        struct instr* store_ret = newInstr(STOREAI, node1->children[0]->temp, RFP, 12); //Store do valor a ser retornado no campo especifico
+        struct instr* l_end_ret = newInstr(LOADAI, RFP, 0, temp); // Carrega end de retorno em reg temporario
+        struct instr* rsp_update = newInstr(LOADAI, RFP, 4, RSP);
+        struct instr* rfp_update = newInstr(LOADAI, RFP, 8, RFP);
+        struct instr* jump = newInstr(JUMP, temp, NU, NU); // Salta para o endere�o de retorno
+
+        node1->children[0]->codeEnd->next = store_ret;
+        store_ret->next = l_end_ret;
+        l_end_ret->next = rsp_update;
+        rsp_update->next = rfp_update;
+        rfp_update->next = jump;
+
+        node1->code = node1->children[0]->code;
+        node1->codeEnd = jump;
+    }
+}
+
 void codeOr(struct node* parent) {
-    int label newLabel();
+    int label = newLabel();
     patch(parent->children[0]->patchFalse, label);
 
     parent->patchFalse = parent->children[1]->patchFalse;
@@ -191,12 +319,12 @@ void codeOr(struct node* parent) {
     parent->children[0]->codeEnd->next = nop;
     nop->next = parent->children[1]->code;
 
-    parent->code = parent->children[0]->code;
-    parent->codeEnd = parent->children[1]->codeEnd;
+    parent->code = parent->children[0]->code; 
+    parent->codeEnd = parent->children[1]->codeEnd; 
 }
 
 void codeAnd(struct node* parent) {
-    int label newLabel();
+    int label = newLabel();
     patch(parent->children[0]->patchTrue, label);
 
     parent->patchTrue = parent->children[1]->patchTrue;
@@ -244,8 +372,8 @@ void codeUnaryOp(struct node* parent, struct node* op, struct node* exp){
     }
 
     if(op->value->token.character == '-'){
-        int reg newRegister();
-        struct inst* neg = newInstr(RSUBI, exp->temp, 0, reg);
+        int reg = newRegister();
+        struct instr* neg = newInstr(RSUBI, exp->temp, 0, reg);
         exp->codeEnd->next = neg;
         parent->code = exp->code;
         parent->codeEnd = neg;
@@ -261,17 +389,50 @@ void codeUnaryOp(struct node* parent, struct node* op, struct node* exp){
     }
 }
 
+void codeTernaryOp(struct node* parent) {
+    int label_true  = newLabel();
+    int label_false = newLabel();
+    int label_next = newLabel();
+
+    patch(parent->children[0]->patchTrue, label_true);
+    patch(parent->children[0]->patchFalse, label_false);
+
+    struct instr* label_true_code = codeLabel(label_true);
+    struct instr* label_false_code = codeLabel(label_false);
+    struct instr* next_label_code = codeLabel(label_next);
+
+    int temp = newRegister();
+    struct instr* transfer_if_true  = newInstr(I2I, parent->children[1]->temp, temp, NU);
+    struct instr* transfer_if_false = newInstr(I2I, parent->children[2]->temp, temp, NU);
+
+    struct instr* end_then = newInstr(JUMPI, label_next, NU, NU);
+    struct instr* end_else = newInstr(JUMPI, label_next, NU, NU);
+
+    parent->children[0]->codeEnd->next = label_true_code;
+    label_true_code->next = parent->children[1]->code;
+
+    parent->children[1]->codeEnd->next = transfer_if_true;
+    transfer_if_true->next = end_then;
+    end_then->next = label_false_code;
+    label_false_code->next = parent->children[2]->code;
+
+    parent->children[2]->codeEnd->next = transfer_if_false;
+    transfer_if_false->next = end_else;
+    end_else->next = next_label_code;
+
+    parent->code = parent->children[0]->code;
+    parent->codeEnd = next_label_code;
+    parent->temp = temp;
+}
+
 void patch(list<int*> patchList, int label) {
-    for(auto aux = patchList.begin() ; aux != patchList.end ; aux++) {
-        *aux = label
+    for(auto aux = patchList.begin(); aux != patchList.end(); aux++) {
+        **aux = label;
     }
     patchList.clear();
 }
 
 list<int*> concatPatches(list<int*> patchList1, list<int*> patchList2) {
-    if(patchList1 == NULL) {
-        return patchList2;
-    }
     patchList1.insert(patchList1.end(), patchList2.begin(), patchList2.end());
     return patchList1;
 }

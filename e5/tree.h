@@ -1,6 +1,6 @@
 /* Grupo H - Carlos Morvan Santiago, Maria Cecília Corrêa */
+#include <bits/stdc++.h>
 #define MAX_CHILDREN 4
-
 
 
 struct instr{
@@ -22,8 +22,8 @@ struct node{
     struct instr* code;
     struct instr* codeEnd;
     int temp;
-    list<int*> patchTrue;
-    list<int*> patchFalse;
+    std::list<int*> patchTrue;
+    std::list<int*> patchFalse;
 };
 
 
