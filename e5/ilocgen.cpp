@@ -6,6 +6,8 @@
 
 using namespace std;
 
+using namespace std;
+
 int reg_counter = 0;
 int label_counter = 0;
 int mainFunct;
@@ -133,11 +135,106 @@ void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp) {
     int offset = getOffset(var->token.str, &scope);
 
     int base = scope == GLOBAL ? RBSS : RFP;
+}
 
-    struct instr* store = newInstr(STOREAI, exp->temp, base, offset);
-    exp->codeEnd->next = store;
-    parent->code = exp->code; 
-    parent->codeEnd = store; 
+void ifCode(struct node* parent) {
+    int label_true  = newLabel();
+    int label_false = newLabel();
+
+    patch(parent->children[0]->patchTrue, label_true);
+    patch(parent->children[0]->patchFalse, label_false);
+
+    struct instr* label_true_code = codeLabel(label_true);
+    struct instr* label_false_code = codeLabel(label_false);
+
+    parent->children[0]->codeEnd->next = label_true_code;
+    if(parent->children[1] != NULL) {
+        label_true_code->next = parent->children[1]->code;
+        parent->children[1]->codeEnd->next = label_false_code;
+    } else {
+        label_true_code->next = label_false_code;
+    }
+    parent->codeEnd = label_false_code; 
+
+    if(parent->children[2] != NULL) { 
+        int label_next = newLabel();
+        struct instr* label_next_code = codeLabel(label_next); // Codigo do label para a inst depois do if else
+        struct instr* end_then = newInstr(JUMPI, label_next, NU, NU);
+        struct instr* end_else = newInstr(JUMPI, label_next, NU, NU);
+
+        if(parent->children[1] != NULL){
+            parent->children[1]->codeEnd->next = end_then;
+        }else{
+            label_true_code->next = end_then;
+        }
+        end_then->next = label_false_code;
+        label_false_code->next = parent->children[2]->code;
+        parent->children[2]->codeEnd->next = end_else;
+        end_else->next = label_next_code;
+        parent->codeEnd = label_next_code;  
+    }
+
+    parent->code = parent->children[0]->code;
+}
+
+void codeFor(struct node* node1) {
+    int for_start = newLabel();
+    int label_true = newLabel();
+    int label_false = newLabel();
+
+    patch(node1->children[1]->patchTrue,label_true);
+    patch(node1->children[1]->patchFalse,label_false);
+
+    struct instr* code_for = codeLabel(for_start);
+    struct instr* code_true = codeLabel(label_true);
+    struct instr* code_false = codeLabel(label_false);
+
+    struct instr* code_jump_for = newInstr(JUMPI, for_start, NU, NU);
+
+    node1->children[0]->codeEnd->next = code_for;
+    code_for->next = node1->children[1]->code;
+    node1->children[1]->codeEnd->next = code_true;
+
+    if(node1->children[3] != NULL) {
+        code_true->next = node1->children[3]->code;
+        node1->children[3]->codeEnd->next = node1->children[2]->code;
+    }else {
+        code_true->next = node1->children[2]->code;
+    }
+
+    node1->children[2]->codeEnd->next = code_jump_for;
+    code_jump_for->next = code_false;
+
+    node1->code = node1->children[0]->code;
+    node1->codeEnd = code_false;
+}
+
+void codeWhile(struct node* node1) {
+    int while_start = newLabel();
+    int label_true = newLabel();
+    int label_false = newLabel();
+
+    patch(node1->children[0]->patchTrue, label_true);
+    patch(node1->children[0]->patchFalse, label_false);
+
+    struct instr* code_while = codeLabel(while_start);
+    struct instr* code_true = codeLabel(label_true);
+    struct instr* code_false = codeLabel(label_false);
+
+    struct instr* code_jump_while = newInstr(JUMPI, while_start, NU, NU);
+
+    code_while->next = node1->children[0]->code;
+    node1->children[0]->codeEnd->next = code_true;
+    if(node1->children[1] != NULL) {
+        code_true->next = node1->children[1]->code;
+        node1->children[1]->codeEnd->next = code_jump_while;
+    } else {
+        code_true->next = code_jump_while;
+    }
+    code_jump_while->next = code_false;
+
+    node1->code = code_while;
+    node1->codeEnd = code_false;
 }
 
 void funcCallCode(struct node* node1){
@@ -181,15 +278,13 @@ void funcCallCode(struct node* node1){
 
 void returnCode(struct node* node1)
 {
-    if(mainFunct == TRUE)
-    {
+    if(mainFunct == TRUE) {
         struct instr* halt = newInstr(HALT, NU, NU, NU);
         node1->children[0]->codeEnd->next = halt;
 
         node1->code = node1->children[0]->code;
         node1->codeEnd = halt;
-    } else
-    {        
+    } else {        
         int temp = newRegister();
 
         struct instr* store_ret = newInstr(STOREAI, node1->children[0]->temp, RFP, 12); //Store do valor a ser retornado no campo especifico
@@ -207,4 +302,133 @@ void returnCode(struct node* node1)
         node1->code = node1->children[0]->code;
         node1->codeEnd = jump;
     }
+}
+
+void codeOr(struct node* parent) {
+    int label = newLabel();
+    patch(parent->children[0]->patchFalse, label);
+
+    parent->patchFalse = parent->children[1]->patchFalse;
+    parent->patchTrue = concatPatches(parent->children[0]->patchTrue, parent->children[1]->patchTrue);
+
+    struct instr* nop = codeLabel(label);
+    parent->children[0]->codeEnd->next = nop;
+    nop->next = parent->children[1]->code;
+
+    parent->code = parent->children[0]->code; 
+    parent->codeEnd = parent->children[1]->codeEnd; 
+}
+
+void codeAnd(struct node* parent) {
+    int label = newLabel();
+    patch(parent->children[0]->patchTrue, label);
+
+    parent->patchTrue = parent->children[1]->patchTrue;
+    parent->patchFalse = concatPatches(parent->children[0]->patchFalse, parent->children[1]->patchFalse);
+
+    struct instr* nop = codeLabel(label);
+    parent->children[0]->codeEnd->next = nop;
+    nop->next = parent->children[1]->code;
+
+    parent->code = parent->children[0]->code;
+    parent->codeEnd = parent->children[1]->codeEnd;
+}
+
+void codeRelOp(struct node* parent, int op) {
+    int reg = newRegister();
+    struct instr* cmp = newInstr(op, parent->children[0]->temp, parent->children[1]->temp, reg);
+    struct instr* cbr = newInstr(CBR, reg, NU, NU);
+
+    parent->children[0]->codeEnd->next = parent->children[1]->code;
+    parent->children[1]->codeEnd->next = cmp;
+    cmp->next = cbr;
+
+    parent->code = parent->children[0]->code;
+    parent->codeEnd = cbr;
+    
+    parent->patchTrue.push_front(&(cbr->arg2));
+    parent->patchFalse.push_front(&(cbr->arg3));
+}
+
+void codeBinaryOp(struct node* parent, int op) {
+    int reg = newRegister();
+    struct instr* opCode = newInstr(op, parent->children[0]->temp, parent->children[1]->temp, reg);
+
+    parent->children[0]->codeEnd->next = parent->children[1]->code;
+    parent->children[1]->codeEnd->next = opCode;
+
+    parent->code = parent->children[0]->code;
+    parent->codeEnd = opCode;
+    parent->temp = reg;
+}
+
+void codeUnaryOp(struct node* parent, struct node* op, struct node* exp){
+    if(op == NULL || (op->value->token.character != '-' && op->value->token.character != '!')) {
+        return;
+    }
+
+    if(op->value->token.character == '-'){
+        int reg = newRegister();
+        struct instr* neg = newInstr(RSUBI, exp->temp, 0, reg);
+        exp->codeEnd->next = neg;
+        parent->code = exp->code;
+        parent->codeEnd = neg;
+        parent->temp = reg;
+    }
+
+    if(op->value->token.character == '!') {
+        parent->patchFalse = exp->patchTrue;
+        parent->patchTrue = exp->patchFalse;
+        parent->code = exp->code;
+        parent->codeEnd = exp->codeEnd;
+        parent->temp = exp->temp;
+    }
+}
+
+void codeTernaryOp(struct node* parent) {
+    int label_true  = newLabel();
+    int label_false = newLabel();
+    int label_next = newLabel();
+
+    patch(parent->children[0]->patchTrue, label_true);
+    patch(parent->children[0]->patchFalse, label_false);
+
+    struct instr* label_true_code = codeLabel(label_true);
+    struct instr* label_false_code = codeLabel(label_false);
+    struct instr* next_label_code = codeLabel(label_next);
+
+    int temp = newRegister();
+    struct instr* transfer_if_true  = newInstr(I2I, parent->children[1]->temp, temp, NU);
+    struct instr* transfer_if_false = newInstr(I2I, parent->children[2]->temp, temp, NU);
+
+    struct instr* end_then = newInstr(JUMPI, label_next, NU, NU);
+    struct instr* end_else = newInstr(JUMPI, label_next, NU, NU);
+
+    parent->children[0]->codeEnd->next = label_true_code;
+    label_true_code->next = parent->children[1]->code;
+
+    parent->children[1]->codeEnd->next = transfer_if_true;
+    transfer_if_true->next = end_then;
+    end_then->next = label_false_code;
+    label_false_code->next = parent->children[2]->code;
+
+    parent->children[2]->codeEnd->next = transfer_if_false;
+    transfer_if_false->next = end_else;
+    end_else->next = next_label_code;
+
+    parent->code = parent->children[0]->code;
+    parent->codeEnd = next_label_code;
+    parent->temp = temp;
+}
+
+void patch(list<int*> patchList, int label) {
+    for(auto aux = patchList.begin(); aux != patchList.end(); aux++) {
+        **aux = label;
+    }
+    patchList.clear();
+}
+
+list<int*> concatPatches(list<int*> patchList1, list<int*> patchList2) {
+    patchList1.insert(patchList1.end(), patchList2.begin(), patchList2.end());
+    return patchList1;
 }

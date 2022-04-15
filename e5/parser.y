@@ -1,6 +1,5 @@
 /* Grupo H - Carlos Morvan Santiago, Maria Cecília Corrêa */
 %{
-    #include <stdio.h>
     #include "yylvallib.h"
     #include "tree.h"
     #include "types.h"
@@ -181,7 +180,7 @@ shift_op:
 
 return: TK_PR_RETURN expr   { $$ = createParentNode1Child(lexToNode($1), $2); validate_return($2->type); returnCode($$); };
 
-if_then_else_opt: TK_PR_IF'('expr')' '{' { push_scope(); } command_block '}' else_opt { $$ = createParentNode3Children(lexToNode($1), $3, $7, $9); pop_scope(); };
+if_then_else_opt: TK_PR_IF'('expr')' '{' { push_scope(); } command_block '}' else_opt { $$ = createParentNode3Children(lexToNode($1), $3, $7, $9); ifCode($$); pop_scope(); };
 else_opt: 
     TK_PR_ELSE '{' { push_scope(); } command_block'}'  { $$ = $4; pop_scope(); }
     | %empty                        { $$ = NULL; };
@@ -192,7 +191,7 @@ for_block:
 while_block: TK_PR_WHILE'(' expr ')' TK_PR_DO '{' { push_scope(); } command_block '}' { $$ = createParentNode2Children(lexToNode($1), $3, $8); pop_scope(); };
 
 expr: 
-    logical_or_or_and '?' expr ':' expr     { $$ = createParentNode3Children(lexToNode(lexValueFromOC("?:")), $1, $3, $5); ; $$->type = get_inferred_type_node($3, $5); }
+    logical_or_or_and '?' expr ':' expr     { $$ = createParentNode3Children(lexToNode(lexValueFromOC("?:")), $1, $3, $5); ; $$->type = get_inferred_type_node($3, $5); codeTernaryOp($$); }
     | logical_or_or_and                     { $$ = $1; };
 
 logical_or_or_and: 
