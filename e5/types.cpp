@@ -659,7 +659,7 @@ void print_nature_str(int nature) {
     }
 }
 
-int getDesloc(char* id, int* scope) {
+int getOffset(char* id, int* scope) {
     *scope = LOCAL;
     for(auto auxScope = scopes.begin(); auxScope!= scopes.end(); auxScope++) {
         auto table_entry = auxScope->find(id);
