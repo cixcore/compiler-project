@@ -87,8 +87,13 @@ symbols_table deepcopy_symbols_table() {
         copy->type = iter->second->type;
         copy->nature = iter->second->nature;
         copy->size = iter->second->size;
+        copy->offset = scope_deslocs.front();
         copy->arguments = iter->second->arguments;
         copy->token_value_data = iter->second->token_value_data;
+
+        int scope_offset = scope_deslocs.pop_front();
+        scope_offset += iter->second->size;
+        scope_deslocs.front(scope_offset);
 
         table.insert(entry(strdup(iter->first), copy));
     }
@@ -97,6 +102,7 @@ symbols_table deepcopy_symbols_table() {
 }
 
 void create_func_entry_with_args(struct lex_value_t *identifier, int type, int nat) {
+    int tableDesloc = 16;
 
     validate_err_function_string(type, identifier->line, get_col_number());
 
@@ -130,6 +136,7 @@ void create_func_entry_with_args(struct lex_value_t *identifier, int type, int n
 
     // adiciona cada argumento como uma variável no escopo mais de cima da pilha
     push_scope();
+
     for(auto arg = new_c->arguments.begin(); arg != new_c->arguments.end(); arg++) {
         struct symtable_content *arg_new_c = new symtable_content();
         arg_new_c->lin = arg->lin;
@@ -141,7 +148,15 @@ void create_func_entry_with_args(struct lex_value_t *identifier, int type, int n
 
         validate_err_declared_symbol(*arg_new_c, arg_new_c->token_value_data.str, nat);
 
+        arg_new_c->offset = tableDesloc;
+        tableDesloc += INT_SIZE_BYTES;
+
         scopes.front().insert(entry(strdup(arg_new_c->token_value_data.str), arg_new_c));
+    }
+
+    if(strcmp(identifier->token.str, "main") != 0){
+        int new_scope_offset = scope_deslocs.pop_front();
+        scope_deslocs.push_front(new_scope_offset);
     }
 }
 
@@ -523,7 +538,17 @@ void validate_node_type(struct node* n1, struct node* n2) {
     get_inferred_type_validate_char_string(n1->type, n2->type, get_line_number(), get_col_number());
 }
 
-void pop_scope() {
+void pop_scope(bool offset_backpropag) {
+    
+    if(offset_backpropag) { 
+        // substitui o offset do segundo no topo pelo do topo que será removido
+        int offset = scope_deslocs.pop_front();
+        scope_deslocs.pop_front();
+        scope_deslocs.push_front(offset);
+    } else {
+        scope_deslocs.pop_front();
+    }
+    
     free_symbols_table(scopes.front());
     scopes.pop_front();
 }

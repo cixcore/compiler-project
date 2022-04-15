@@ -92,7 +92,7 @@ var_global:
     TK_IDENTIFICADOR                          { declare_id_entry_missing_type($1); free_lex_val($1); }
     | TK_IDENTIFICADOR '[' TK_LIT_INT ']'     { declare_vector_entry_missing_type($1, $3); free_lex_val($1); free_lex_val($3); };
 
-func: static type TK_IDENTIFICADOR '('parameters')'{ create_func_entry_with_args($3, $2, FUNC_N); setMain($3); createLabelFunc($3); }'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); funcDecCode($$, $3); pop_scope(); };
+func: static type TK_IDENTIFICADOR '('parameters')'{ create_func_entry_with_args($3, $2, FUNC_N); setMain($3); createLabelFunc($3); }'{'command_block'}' { $$ = createParentNode1Child(lexToNode($3), $9); funcDecCode($$, $3); pop_scope(true); };
 
 parameters: 
     parameters_list 
@@ -110,7 +110,7 @@ command_block:
     | %empty                    { $$ = NULL; };
 
 command: 
-    '{' { push_scope(); } command_block'}'     { $$ = $3; pop_scope(); }
+    '{' { push_scope(); } command_block'}'     { $$ = $3; pop_scope(false); }
     | dec_var_local         { $$ = $1; }
     | attr                  { $$ = $1; }
     | input                 { $$ = $1; }
@@ -180,15 +180,15 @@ shift_op:
 
 return: TK_PR_RETURN expr   { $$ = createParentNode1Child(lexToNode($1), $2); validate_return($2->type); returnCode($$); };
 
-if_then_else_opt: TK_PR_IF'('expr')' '{' { push_scope(); } command_block '}' else_opt { $$ = createParentNode3Children(lexToNode($1), $3, $7, $9); ifCode($$); pop_scope(); };
+if_then_else_opt: TK_PR_IF'('expr')' '{' { push_scope(); } command_block '}' else_opt { $$ = createParentNode3Children(lexToNode($1), $3, $7, $9); ifCode($$); pop_scope(false); };
 else_opt: 
-    TK_PR_ELSE '{' { push_scope(); } command_block'}'  { $$ = $4; pop_scope(); }
+    TK_PR_ELSE '{' { push_scope(); } command_block'}'  { $$ = $4; pop_scope(false); }
     | %empty                        { $$ = NULL; };
 
 for_block: 
-    TK_PR_FOR'(' attr ':' expr ':' attr ')' '{' { push_scope(); } command_block '}'   { $$ = createParentNode4Children(lexToNode($1), $3, $5, $7, $11);  pop_scope(); codeFor($$); };
+    TK_PR_FOR'(' attr ':' expr ':' attr ')' '{' { push_scope(); } command_block '}'   { $$ = createParentNode4Children(lexToNode($1), $3, $5, $7, $11);  pop_scope(false); codeFor($$); };
 
-while_block: TK_PR_WHILE'(' expr ')' TK_PR_DO '{' { push_scope(); } command_block '}' { $$ = createParentNode2Children(lexToNode($1), $3, $8); pop_scope(); codeWhile($$); };
+while_block: TK_PR_WHILE'(' expr ')' TK_PR_DO '{' { push_scope(); } command_block '}' { $$ = createParentNode2Children(lexToNode($1), $3, $8); pop_scope(false); codeWhile($$); };
 
 expr: 
     logical_or_or_and '?' expr ':' expr     { $$ = createParentNode3Children(lexToNode(lexValueFromOC("?:")), $1, $3, $5); ; $$->type = get_inferred_type_node($3, $5); codeTernaryOp($$); }
