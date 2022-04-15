@@ -131,8 +131,8 @@ var_local_list:
     | var_local                                 { $$ = $1; };
 var_local: 
     TK_IDENTIFICADOR                                { declare_id_entry_missing_type($1); free_lex_val($1); $$ = NULL; }
-    | TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR    { declare_id_entry_missing_type_init_id($1, $3); $$ = createParentNode2Children(lexToNode($2), lexToNode($1), lexToNode($3)); }
-    | TK_IDENTIFICADOR TK_OC_LE literal             { declare_id_entry_missing_type_init_lit($1, $3); $$ = createParentNode2Children(lexToNode($2), lexToNode($1), $3); };
+    | TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR    { declare_id_entry_missing_type_init_id($1, $3); $$ = createParentNode2Children(lexToNode($2), lexToNode($1), lexToNode($3)); loadVar($$->children[1], $3->token.str); }
+    | TK_IDENTIFICADOR TK_OC_LE literal             { declare_id_entry_missing_type_init_lit($1, $3); $$ = createParentNode2Children(lexToNode($2), lexToNode($1), $3); loadLit($$->children[1]); };
 
 literal: 
     '-' TK_LIT_INT                  { $$ = createNLeaf($2); $$->type = INT_T; add_symtable_lit($2); }
@@ -159,7 +159,7 @@ output:
 
 func_call: TK_IDENTIFICADOR '('func_call_parameters_list')'     { $$ = createParentNode1Child(createFuncCallNode($1), $3); 
                                                                     $$->type = get_type_or_err_undeclared_symbol(*($1), FUNC_N);
-                                                                    validate_func_cal_parameters($1); };
+                                                                    validate_func_cal_parameters($1); funcCallCode($$); };
 func_call_parameters_list: 
 	func_call_parameter ',' func_call_parameters_list 	{ $$ = connect($1, $3); collect_param($1); }
 	| func_call_parameter					            { $$ = $1; collect_param($1);};
@@ -179,7 +179,7 @@ shift_op:
     TK_OC_SL        { $$ = createLeaf($1); }
     | TK_OC_SR      { $$ = createLeaf($1); };
 
-return: TK_PR_RETURN expr   { $$ = createParentNode1Child(lexToNode($1), $2); validate_return($2->type); };
+return: TK_PR_RETURN expr   { $$ = createParentNode1Child(lexToNode($1), $2); validate_return($2->type); returnCode($$); };
 
 if_then_else_opt: TK_PR_IF'('expr')' '{' { push_scope(); } command_block '}' else_opt { $$ = createParentNode3Children(lexToNode($1), $3, $7, $9); pop_scope(); };
 else_opt: 
@@ -235,7 +235,7 @@ unary_expr:
     opt_unary_operator unary_expr   { $$ = connect($1, $2); }
     | operand                       { $$ = $1; $$->type = $1->type; };
 operand: 
-    unsigned_literal                    { $$ = $1; $$->type = $1->type; }
+    unsigned_literal                    { $$ = $1; $$->type = $1->type; loadLit($$); }
     | TK_IDENTIFICADOR                  { $$ = createLeaf($1); $$->type = get_type_or_err_undeclared_symbol(*($1), VAR_N); }
     | TK_IDENTIFICADOR '[' expr ']'     { $$ = createParentNode2Children(lexToNode(lexValueFromOC("[]")), lexToNode($1), $3); $$->type = get_type_or_err_undeclared_symbol(*($1), VEC_N); }
     | func_call                         { $$ = $1; $$->type = $1->type; }

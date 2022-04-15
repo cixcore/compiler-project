@@ -46,4 +46,8 @@ struct instr* newInstr(int op, int arg1, int arg2, int arg3);
 void setMain(struct lex_value_t* funcName);
 
 void initCode(struct node* node1);
+void loadVar(struct node* no, char* id);
+void loadLit(struct node* no);
 void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp);
+void funcCallCode(struct node* node1);
+void returnCode(struct node* node1);
