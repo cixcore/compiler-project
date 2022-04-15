@@ -91,9 +91,10 @@ symbols_table deepcopy_symbols_table() {
         copy->arguments = iter->second->arguments;
         copy->token_value_data = iter->second->token_value_data;
 
-        int scope_offset = scope_deslocs.pop_front();
+        int scope_offset = scope_deslocs.front();
+        scope_deslocs.pop_front();
         scope_offset += iter->second->size;
-        scope_deslocs.front(scope_offset);
+        scope_deslocs.push_front(scope_offset);
 
         table.insert(entry(strdup(iter->first), copy));
     }
@@ -155,7 +156,8 @@ void create_func_entry_with_args(struct lex_value_t *identifier, int type, int n
     }
 
     if(strcmp(identifier->token.str, "main") != 0){
-        int new_scope_offset = scope_deslocs.pop_front();
+        int new_scope_offset = scope_deslocs.front(); 
+        scope_deslocs.pop_front(); 
         scope_deslocs.push_front(new_scope_offset);
     }
 }
@@ -542,7 +544,8 @@ void pop_scope(bool offset_backpropag) {
     
     if(offset_backpropag) { 
         // substitui o offset do segundo no topo pelo do topo que será removido
-        int offset = scope_deslocs.pop_front();
+        int offset = scope_deslocs.front();
+        scope_deslocs.pop_front();
         scope_deslocs.pop_front();
         scope_deslocs.push_front(offset);
     } else {

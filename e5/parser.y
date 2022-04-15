@@ -231,12 +231,12 @@ pow_or_op:
     | unary_expr                        { $$ = $1; };
 
 unary_expr: 
-    opt_unary_operator unary_expr   { $$ = connect($1, $2); #codeUnaryOp($$, $2); }
+    opt_unary_operator unary_expr   { $$ = connect($1, $2); codeUnaryOp($$, $2); }
     | operand                       { $$ = $1; $$->type = $1->type; };
 operand: 
     unsigned_literal                    { $$ = $1; $$->type = $1->type; loadLit($$); }
-    | TK_IDENTIFICADOR                  { $$ = createLeaf($1); $$->type = get_type_or_err_undeclared_symbol(*($1), VAR_N);#loadVar($$, $1->token.str); }
-    | TK_IDENTIFICADOR '[' expr ']'     { $$ = createParentNode2Children(lexToNode(lexValueFromOC("[]")), lexToNode($1), $3); $$->type = get_type_or_err_undeclared_symbol(*($1), VEC_N);#loadVar($$, $1->token.str); }
+    | TK_IDENTIFICADOR                  { $$ = createLeaf($1); $$->type = get_type_or_err_undeclared_symbol(*($1), VAR_N);loadVar($$, $1->token.str); }
+    | TK_IDENTIFICADOR '[' expr ']'     { $$ = createParentNode2Children(lexToNode(lexValueFromOC("[]")), lexToNode($1), $3); $$->type = get_type_or_err_undeclared_symbol(*($1), VEC_N);loadVar($$, $1->token.str); }
     | func_call                         { $$ = $1; $$->type = $1->type;}
     | '('expr')'                        { $$ = $2; $$->type = $2->type;};
 unsigned_literal: 
