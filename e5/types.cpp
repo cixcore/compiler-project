@@ -530,6 +530,8 @@ void pop_scope() {
 void push_scope() {
     symbols_table new_scope;
     scopes.push_front(new_scope);
+    int desloc = scope_deslocs.front();
+    scope_deslocs.push_front(desloc);
 }
 
 int get_inferred_type_symtable_cont(int type1, int type2, symtable_content content) {
