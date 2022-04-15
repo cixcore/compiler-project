@@ -22,7 +22,8 @@ struct node{
     struct instr* code;
     struct instr* codeEnd;
     int temp;
-    //list?
+    list<int*> patchTrue;
+    list<int*> patchFalse;
 };
 
 
