@@ -58,7 +58,7 @@ void codeOr(struct node* parent);
 void codeAnd(struct node* parent);
 void codeRelOp(struct node* parent, int op);
 void codeBinaryOp(struct node* parent, int op);
-void codeUnaryOp(struct node* parent, struct node* op, struct node* exp);
+void codeUnaryOp(struct node* parent, struct node* exp);
 void codeTernaryOp(struct node* parent);
 
 void patch(std::list<int*> patchList, int label);

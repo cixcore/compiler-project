@@ -362,26 +362,26 @@ void codeBinaryOp(struct node* parent, int op) {
     parent->temp = reg;
 }
 
-void codeUnaryOp(struct node* parent, struct node* op, struct node* exp){
-    if(op == NULL || (op->value->token.character != '-' && op->value->token.character != '!')) {
-        return;
-    }
+void codeUnaryOp(struct node* parent, struct node* exp){
 
-    if(op->value->token.character == '-'){
-        int reg = newRegister();
-        struct instr* neg = newInstr(RSUBI, exp->temp, 0, reg);
-        exp->codeEnd->next = neg;
-        parent->code = exp->code;
-        parent->codeEnd = neg;
-        parent->temp = reg;
-    }
-
-    if(op->value->token.character == '!') {
-        parent->patchFalse = exp->patchTrue;
-        parent->patchTrue = exp->patchFalse;
-        parent->code = exp->code;
-        parent->codeEnd = exp->codeEnd;
-        parent->temp = exp->temp;
+    switch (parent->value->token.character)
+    {
+        case '-':
+            int reg = newRegister();
+            struct instr* neg = newInstr(RSUBI, exp->temp, 0, reg);
+            exp->codeEnd->next = neg;
+            parent->code = exp->code;
+            parent->codeEnd = neg;
+            parent->temp = reg;
+        break;
+    
+        case '!':
+            parent->patchFalse = exp->patchTrue;
+            parent->patchTrue = exp->patchFalse;
+            parent->code = exp->code;
+            parent->codeEnd = exp->codeEnd;
+            parent->temp = exp->temp;
+        break;
     }
 }
 
