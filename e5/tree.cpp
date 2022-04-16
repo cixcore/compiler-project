@@ -197,13 +197,15 @@ struct node *createParentNode4Children(struct node *parent, struct node *child0,
 
 struct node *lexToNode(struct lex_value_t *lex_value)
 {
-    struct node *newNode = (struct node *)malloc(sizeof(struct node));
+    struct node *newNode = new node();
     newNode->value = lex_value;
     newNode->next = NULL;
     newNode->children[0] = NULL;
     newNode->children[1] = NULL;
     newNode->children[2] = NULL;
     newNode->children[3] = NULL;
+    newNode->code = NULL;
+    newNode->codeEnd = NULL;
     return newNode;
 }
 struct node *createLeaf(struct lex_value_t *lex_value)

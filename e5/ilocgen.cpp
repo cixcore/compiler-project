@@ -6,8 +6,6 @@
 
 using namespace std;
 
-using namespace std;
-
 int reg_counter = 0;
 int label_counter = 0;
 int mainFunct;
@@ -366,22 +364,23 @@ void codeUnaryOp(struct node* parent, struct node* exp){
 
     switch (parent->value->token.character)
     {
-        case '-':
+        case '-': {
             int reg = newRegister();
             struct instr* neg = newInstr(RSUBI, exp->temp, 0, reg);
             exp->codeEnd->next = neg;
             parent->code = exp->code;
             parent->codeEnd = neg;
             parent->temp = reg;
-        break;
-    
-        case '!':
+            break;
+        }
+        case '!': {
             parent->patchFalse = exp->patchTrue;
             parent->patchTrue = exp->patchFalse;
             parent->code = exp->code;
             parent->codeEnd = exp->codeEnd;
             parent->temp = exp->temp;
-        break;
+            break;
+        }
     }
 }
 

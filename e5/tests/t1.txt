@@ -1,4 +1,3 @@
-static int um, dois[3];
 static int func (int a){
 	int i,j, l<=-2, m<=3;
 }

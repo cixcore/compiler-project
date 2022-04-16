@@ -77,7 +77,7 @@ void validate_shift(struct lex_value_t *lit);
 void validate_func_cal_parameters(struct lex_value_t *func);
 void validate_node_type(struct node* n1, struct node* n2);
 
-void pop_scope();
+void pop_scope(bool offset_backpropag);
 void push_scope();
 
 int bytes_of(int type);
