@@ -26,6 +26,9 @@ void local_init_types_validate_and_add_to_scope(int type) {
         }
         it->second->size *= bytes_of(it->second->type);
     }
+    if(scope_deslocs.empty()) {
+        scope_deslocs.push_front(0);
+    }
     symbols_table deepcopy_table = deepcopy_symbols_table();
     if(scopes.empty()) {
         scopes.push_front(deepcopy_table);
@@ -50,6 +53,9 @@ void global_init_types_and_add_to_scope(int type)
         }
     }
 
+    if(scope_deslocs.empty()) {
+        scope_deslocs.push_front(0);
+    }
     symbols_table deepcopy_table = deepcopy_symbols_table();
     if(scopes.empty())
     {
@@ -132,6 +138,7 @@ void create_func_entry_with_args(struct lex_value_t *identifier, int type, int n
     if(scopes.empty()) {
         symbols_table new_table;
         scopes.push_front(new_table);
+        scope_deslocs.push_front(0);
     }
     scopes.front().insert(entry(strdup(identifier->token.str), new_c));
 
@@ -198,6 +205,8 @@ void declare_entry_missing_type(struct lex_value_t *identifier, int nat, int mul
     new_c->size = mult;
     new_c->token_value_data = identifier->token;
 
+    cout << identifier->token.str << endl;
+
     validate_err_declared_symbol(*new_c, identifier->token.str, nat);
 
     undefined_type_entries.insert(entry(strdup(identifier->token.str), new_c));
@@ -249,6 +258,7 @@ void add_symtable_lit(struct lex_value_t *lit) {
     if(scopes.empty()) {
         symbols_table new_table;
         scopes.push_front(new_table);
+        scope_deslocs.push_front(0);
     }
 
     char* key;
@@ -467,17 +477,19 @@ int get_type_or_err_undeclared_symbol(struct lex_value_t id_init, int nature) {
     exit(ERR_UNDECLARED);  
 }
 void validate_err_declared_symbol(symtable_content content, char* symtable_key, int nature) {
-    symbols_table scope = scopes.front();
-    auto table_entry = scope.find(symtable_key);
+    if(!scopes.empty()) {
+        symbols_table scope = scopes.front();
+        auto table_entry = scope.find(symtable_key);
 
-    if(table_entry != scope.end()) {
-        cout << "Redeclaration at ln "<<content.lin<<", col "<<content.col<<": identifier '"<<symtable_key<<"' (";
-        print_nature_str(content.nature); cout<<") is already in use at ln "<<table_entry->second->lin<<", col "<<table_entry->second->col<<" (";
-        print_nature_str(table_entry->second->nature); cout<<").\n";
-        printf("program exit code (%d).", ERR_DECLARED);
-        libera(arvore);
-        exit(ERR_DECLARED);
-    }    
+        if(table_entry != scope.end()) {
+            cout << "Redeclaration at ln "<<content.lin<<", col "<<content.col<<": identifier '"<<symtable_key<<"' (";
+            print_nature_str(content.nature); cout<<") is already in use at ln "<<table_entry->second->lin<<", col "<<table_entry->second->col<<" (";
+            print_nature_str(table_entry->second->nature); cout<<").\n";
+            printf("program exit code (%d).", ERR_DECLARED);
+            libera(arvore);
+            exit(ERR_DECLARED);
+        }  
+    }  
 }
 int size_of(struct lex_value_t id_init) {
     for(auto scope = scopes.begin(); scope != scopes.end(); scope++)
