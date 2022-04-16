@@ -432,3 +432,103 @@ list<int*> concatPatches(list<int*> patchList1, list<int*> patchList2) {
     patchList1.insert(patchList1.end(), patchList2.begin(), patchList2.end());
     return patchList1;
 }
+
+void initCode(void *tree) {
+    struct node *root = (struct node*)tree;
+
+    struct instr* init_rfp = newInstr(LOADI, 1024, RFP, NU);
+    struct instr* init_rsp = newInstr(LOADI, 1024, RSP, NU);
+    struct instr* init_rbss = newInstr(LOADI, 1000, RBSS, NU);
+
+    int label = getFuncLabel("main");
+    struct instr* jump = newInstr(JUMPI, label, NU, NU);
+
+    init_rfp->next = init_rsp;
+    init_rsp->next = init_rbss;
+    init_rbss->next = jump;
+    jump->next = root->code;
+
+    root->code = init_rfp;
+}
+
+void printCode(void *tree) {
+    struct node *root = (struct node*)tree;
+    struct instr* code = root->code;
+
+    while(code != NULL) {
+        switch (code->op) {
+            case LOADAI:  printRegConstRegInstr("loadAI", code); break;
+            case LOADI:   printOneReg("loadI", codigo); break;
+            case ADD:     printThreeReg("add", codigo, '='); break;
+            case SUB:     printThreeReg("sub", codigo, '='); break;
+            case DIV:     printThreeReg("div", codigo, '='); break;
+            case MULT:    printThreeReg("mult", codigo, '='); break;
+            case RSUBI:   printRegConstRegInstr("rsubI", codigo); break;
+            case CMP_LT:  printThreeReg("cmp_LT", codigo, '-'); break;
+            case CMP_LE:  printThreeReg("cmp_LE", codigo, '-'); break;
+            case CMP_EQ:  printThreeReg("cmp_EQ", codigo, '-'); break;
+            case CMP_NE:  printThreeReg("cmp_NE", codigo, '-'); break;
+            case CMP_GT:  printThreeReg("cmp_GT", codigo, '-'); break;
+            case CMP_GE:  printThreeReg("cmp_GE", codigo, '-'); break;
+            case CBR:     printf("cbr\tr%d  ->  L%d, L%d\n", codigo->arg1, codigo->arg2, codigo->arg3); break;
+            case NOP:     printf("L%d: nop\n", codigo->label); break;
+            case STOREAI: printStoreAI(codigo); break;
+            case JUMPI:   printf("jumpI\t->  L%d\n", codigo->arg1); break;
+            case JUMP:    printf("jump\t->  r%d\n", codigo->arg1); break;
+            case ADDI:    printRedConstRegInstr("addI", codigo); break;
+            case HALT:    printf("halt\n"); break;
+            case I2I:     printTwoReg("i2i", codigo); break;
+        }
+        code = code->next;
+    }
+}
+
+void printReg(int id) {
+    switch(id){
+        case RFP:  printf("rfp"); break;
+        case RSP:  printf("rsp"); break;
+        case RBSS: printf("rbss"); break;
+        case RPC:  printf("rpc"); break;
+        default:   printf("r%d", id);
+    }
+}
+
+void printRegConstRegInstr(char* op, struct instr* inst) {
+    printf("%s\t", op);
+    printNomeReg(inst->arg1);
+    printf(", %d  =>  ", inst->arg2);
+    printNomeReg(inst->arg3);
+    printf("\n");
+}
+
+void printStoreAI(struct instr* instr1) {
+    printf("storeAI\t");
+    printNomeReg(inst->arg1);
+    printf("  =>  ");
+    printNomeReg(inst->arg2);
+    printf(", %d\n", inst->arg3);
+}
+
+void printOneReg(char* op, struct instr* instr1) {
+    printf("%s\t%d  =>  ", op, inst->arg1);
+    printNomeReg(inst->arg2);
+    printf("\n");
+}
+
+void printTwoReg(char* op, struct instr* instr1) {
+    printf("%s\t", op);
+    printNomeReg(inst->arg1);
+    printf("  =>  ");
+    printNomeReg(inst->arg2);
+    printf("\n");
+}
+
+void printThreeReg(char* op, struct instr* instr1, char arrow) {
+    printf("%s\t", op);
+    printNomeReg(inst->arg1);
+    printf(", ");
+    printNomeReg(inst->arg2);
+    printf("  %c>  ", arrow);
+    printNomeReg(inst->arg3);
+    printf("\n");
+}

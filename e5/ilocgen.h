@@ -61,5 +61,15 @@ void codeBinaryOp(struct node* parent, int op);
 void codeUnaryOp(struct node* parent, struct node* exp);
 void codeTernaryOp(struct node* parent);
 
+void initCode(void *tree);
+void printCode(void *tree);
+
+void printReg(int id);
+void printRegConstRegInstr(char* op, struct instr* instr1);
+void printStoreAI(struct instr* instr1);
+void printOneReg(char* op, struct instr* instr1);
+void printTwoReg(char* op, struct instr* instr1);
+void printThreeReg(char* op, struct instr* instr1, char arrow);
+
 void patch(std::list<int*> patchList, int label);
 std::list<int*> concatPatches(std::list<int*> patchList1, std::list<int*> patchList2);
