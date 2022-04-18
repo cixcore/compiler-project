@@ -45,7 +45,7 @@ struct instr* codeLabel(int label);
 struct instr* newInstr(int op, int arg1, int arg2, int arg3);
 void setMain(struct lex_value_t* funcName);
 
-void initCode(struct node* node1);
+void initCode(struct node* var_list);
 void loadVar(struct node* no, char* id);
 void loadLit(struct node* no);
 void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp);
@@ -60,6 +60,16 @@ void codeRelOp(struct node* parent, int op);
 void codeBinaryOp(struct node* parent, int op);
 void codeUnaryOp(struct node* parent, struct node* exp);
 void codeTernaryOp(struct node* parent);
+
+void initCodeMem(void *tree);
+void printCode(void *tree);
+
+void printReg(int id);
+void printRegConstRegInstr(char* op, struct instr* instr1);
+void printStoreAI(struct instr* instr1);
+void printOneReg(char* op, struct instr* instr1);
+void printTwoReg(char* op, struct instr* instr1);
+void printThreeReg(char* op, struct instr* instr1, char arrow);
 
 void patch(std::list<int*> patchList, int label);
 std::list<int*> concatPatches(std::list<int*> patchList1, std::list<int*> patchList2);
