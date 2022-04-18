@@ -53,6 +53,7 @@ void global_init_types_and_add_to_scope(int type)
         }
     }
 
+    
     if(scope_deslocs.empty()) {
         scope_deslocs.push_front(0);
     }

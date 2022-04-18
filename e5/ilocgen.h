@@ -65,11 +65,11 @@ void initCodeMem(void *tree);
 void printCode(void *tree);
 
 void printReg(int id);
-void printRegConstRegInstr(char* op, struct instr* instr1);
+void printRegConstRegInstr(const char* op, struct instr* instr1);
 void printStoreAI(struct instr* instr1);
-void printOneReg(char* op, struct instr* instr1);
-void printTwoReg(char* op, struct instr* instr1);
-void printThreeReg(char* op, struct instr* instr1, char arrow);
+void printOneReg(const char* op, struct instr* instr1);
+void printTwoReg(const char* op, struct instr* instr1);
+void printThreeReg(const char* op, struct instr* instr1, char arrow);
 
 void patch(std::list<int*> patchList, int label);
 std::list<int*> concatPatches(std::list<int*> patchList1, std::list<int*> patchList2);
