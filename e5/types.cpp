@@ -205,8 +205,6 @@ void declare_entry_missing_type(struct lex_value_t *identifier, int nat, int mul
     new_c->size = mult;
     new_c->token_value_data = identifier->token;
 
-    cout << identifier->token.str << endl;
-
     validate_err_declared_symbol(*new_c, identifier->token.str, nat);
 
     undefined_type_entries.insert(entry(strdup(identifier->token.str), new_c));
