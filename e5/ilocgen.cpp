@@ -131,6 +131,8 @@ void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp) {
     int scope;
     int offset = getOffset(var->token.str, &scope);
 
+    printf("offset: %d | scope: %d.\n", offset, scope); // apagar
+
     int base = scope == GLOBAL ? RBSS : RFP;
 
     
