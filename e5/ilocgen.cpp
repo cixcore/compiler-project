@@ -24,13 +24,10 @@ void generate_iloc(void *root){
 }
 
 void funcDecCode(struct node* node1, struct lex_value_t* func) {
-
     int label = getFuncLabel(func->token.str);
     struct instr* code_label = codeLabel(label);
 
-    extern struct list<symbols_table> scopes;
     extern list<int> scope_deslocs;
-
 
     struct instr* updated_rsp = newInstr(ADDI, RSP, scope_deslocs.front(),RSP);
 
@@ -97,16 +94,18 @@ void createLabelFunc(struct lex_value_t* func){
     func_labels.push_front(make_pair(strdup(func->token.str), label));
 }
 
-void initCode(struct node* node1) {
-    struct node* aux = node1;
+void initCode(struct node* var_list) {
+    struct node* var_iter = var_list;
+    while(var_iter != NULL) {
 
-    storeVar(aux, aux->children[0]->value, aux->children[1]);
-    if(aux != node1)
-    {  
-        node1->codeEnd->next = aux->code;
-        node1->codeEnd = aux->codeEnd;
+        storeVar(var_iter, var_iter->children[0]->value, var_iter->children[1]);
+        if(var_iter != var_list)
+        {  
+            var_list->codeEnd->next = var_iter->code;
+            var_list->codeEnd = var_iter->codeEnd;
+        }
+        var_iter = var_iter->next;
     }
-    aux = aux->next;
 }
 
 void loadVar(struct node* no, char* id){
@@ -133,6 +132,12 @@ void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp) {
     int offset = getOffset(var->token.str, &scope);
 
     int base = scope == GLOBAL ? RBSS : RFP;
+
+    
+    struct instr* store = newInstr(STOREAI, exp->temp, base, offset);
+    exp->codeEnd->next = store;
+    parent->code = exp->code;
+    parent->codeEnd = store;
 }
 
 void ifCode(struct node* parent) {
@@ -432,7 +437,7 @@ list<int*> concatPatches(list<int*> patchList1, list<int*> patchList2) {
     return patchList1;
 }
 
-void initCode(void *tree) {
+void initCodeMem(void *tree) {
     struct node *root = (struct node*)tree;
 
     struct instr* init_rfp = newInstr(LOADI, 1024, RFP, NU);
@@ -457,26 +462,26 @@ void printCode(void *tree) {
     while(code != NULL) {
         switch (code->op) {
             case LOADAI:  printRegConstRegInstr("loadAI", code); break;
-            case LOADI:   printOneReg("loadI", codigo); break;
-            case ADD:     printThreeReg("add", codigo, '='); break;
-            case SUB:     printThreeReg("sub", codigo, '='); break;
-            case DIV:     printThreeReg("div", codigo, '='); break;
-            case MULT:    printThreeReg("mult", codigo, '='); break;
-            case RSUBI:   printRegConstRegInstr("rsubI", codigo); break;
-            case CMP_LT:  printThreeReg("cmp_LT", codigo, '-'); break;
-            case CMP_LE:  printThreeReg("cmp_LE", codigo, '-'); break;
-            case CMP_EQ:  printThreeReg("cmp_EQ", codigo, '-'); break;
-            case CMP_NE:  printThreeReg("cmp_NE", codigo, '-'); break;
-            case CMP_GT:  printThreeReg("cmp_GT", codigo, '-'); break;
-            case CMP_GE:  printThreeReg("cmp_GE", codigo, '-'); break;
-            case CBR:     printf("cbr\tr%d  ->  L%d, L%d\n", codigo->arg1, codigo->arg2, codigo->arg3); break;
-            case NOP:     printf("L%d: nop\n", codigo->label); break;
-            case STOREAI: printStoreAI(codigo); break;
-            case JUMPI:   printf("jumpI\t->  L%d\n", codigo->arg1); break;
-            case JUMP:    printf("jump\t->  r%d\n", codigo->arg1); break;
-            case ADDI:    printRedConstRegInstr("addI", codigo); break;
+            case LOADI:   printOneReg("loadI", code); break;
+            case ADD:     printThreeReg("add", code, '='); break;
+            case SUB:     printThreeReg("sub", code, '='); break;
+            case DIV:     printThreeReg("div", code, '='); break;
+            case MULT:    printThreeReg("mult", code, '='); break;
+            case RSUBI:   printRegConstRegInstr("rsubI", code); break;
+            case CMP_LT:  printThreeReg("cmp_LT", code, '-'); break;
+            case CMP_LE:  printThreeReg("cmp_LE", code, '-'); break;
+            case CMP_EQ:  printThreeReg("cmp_EQ", code, '-'); break;
+            case CMP_NE:  printThreeReg("cmp_NE", code, '-'); break;
+            case CMP_GT:  printThreeReg("cmp_GT", code, '-'); break;
+            case CMP_GE:  printThreeReg("cmp_GE", code, '-'); break;
+            case CBR:     printf("cbr\tr%d  ->  L%d, L%d\n", code->arg1, code->arg2, code->arg3); break;
+            case NOP:     printf("L%d: nop\n", code->label); break;
+            case STOREAI: printStoreAI(code); break;
+            case JUMPI:   printf("jumpI\t->  L%d\n", code->arg1); break;
+            case JUMP:    printf("jump\t->  r%d\n", code->arg1); break;
+            case ADDI:    printRegConstRegInstr("addI", code); break;
             case HALT:    printf("halt\n"); break;
-            case I2I:     printTwoReg("i2i", codigo); break;
+            case I2I:     printTwoReg("i2i", code); break;
         }
         code = code->next;
     }
@@ -492,42 +497,42 @@ void printReg(int id) {
     }
 }
 
-void printRegConstRegInstr(char* op, struct instr* inst) {
+void printRegConstRegInstr(char* op, struct instr* instr1) {
     printf("%s\t", op);
-    printNomeReg(inst->arg1);
-    printf(", %d  =>  ", inst->arg2);
-    printNomeReg(inst->arg3);
+    printReg(instr1->arg1);
+    printf(", %d  =>  ", instr1->arg2);
+    printReg(instr1->arg3);
     printf("\n");
 }
 
 void printStoreAI(struct instr* instr1) {
     printf("storeAI\t");
-    printNomeReg(inst->arg1);
+    printReg(instr1->arg1);
     printf("  =>  ");
-    printNomeReg(inst->arg2);
-    printf(", %d\n", inst->arg3);
+    printReg(instr1->arg2);
+    printf(", %d\n", instr1->arg3);
 }
 
 void printOneReg(char* op, struct instr* instr1) {
-    printf("%s\t%d  =>  ", op, inst->arg1);
-    printNomeReg(inst->arg2);
+    printf("%s\t%d  =>  ", op, instr1->arg1);
+    printReg(instr1->arg2);
     printf("\n");
 }
 
 void printTwoReg(char* op, struct instr* instr1) {
     printf("%s\t", op);
-    printNomeReg(inst->arg1);
+    printReg(instr1->arg1);
     printf("  =>  ");
-    printNomeReg(inst->arg2);
+    printReg(instr1->arg2);
     printf("\n");
 }
 
 void printThreeReg(char* op, struct instr* instr1, char arrow) {
     printf("%s\t", op);
-    printNomeReg(inst->arg1);
+    printReg(instr1->arg1);
     printf(", ");
-    printNomeReg(inst->arg2);
+    printReg(instr1->arg2);
     printf("  %c>  ", arrow);
-    printNomeReg(inst->arg3);
+    printReg(instr1->arg3);
     printf("\n");
 }

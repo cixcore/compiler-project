@@ -1,5 +1,11 @@
-static int func (int a){
-	int i,j, l<=-2, m<=3;
+int v;
+
+int func() {
+	return 1;
 }
+
 int main (){
+	int a <= 1, b, c, d <= 456;
+
+	b = func();
 }
