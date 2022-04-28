@@ -507,7 +507,7 @@ void printReg(int id) {
     }
 }
 
-void printRegConstRegInstr(char* op, struct instr* instr1) {
+void printRegConstRegInstr(const char* op, struct instr* instr1) {
     printf("%s\t", op);
     printReg(instr1->arg1);
     printf(", %d  =>  ", instr1->arg2);
@@ -523,13 +523,13 @@ void printStoreAI(struct instr* instr1) {
     printf(", %d\n", instr1->arg3);
 }
 
-void printOneReg(char* op, struct instr* instr1) {
+void printOneReg(const char* op, struct instr* instr1) {
     printf("%s\t%d  =>  ", op, instr1->arg1);
     printReg(instr1->arg2);
     printf("\n");
 }
 
-void printTwoReg(char* op, struct instr* instr1) {
+void printTwoReg(const char* op, struct instr* instr1) {
     printf("%s\t", op);
     printReg(instr1->arg1);
     printf("  =>  ");
@@ -537,7 +537,7 @@ void printTwoReg(char* op, struct instr* instr1) {
     printf("\n");
 }
 
-void printThreeReg(char* op, struct instr* instr1, char arrow) {
+void printThreeReg(const char* op, struct instr* instr1, char arrow) {
     printf("%s\t", op);
     printReg(instr1->arg1);
     printf(", ");

@@ -37,7 +37,7 @@
 #define RET_LOAD 4
 #define CALL 5
 #define FUNC_LABEL 6
-#define FUNC_CALL 7
+#define FUN_CALL 7
 
 using label_stack = std::list<std::pair<char*, int>>;
 
@@ -48,6 +48,7 @@ int newLabel();
 void generate_iloc(void* root);
 void funcDecCode(struct node* node1, struct lex_value_t* func);
 int getFuncLabel(char* func);
+char* getFuncName(int label);
 void createLabelFunc(struct lex_value_t* func);
 struct instr* codeLabel(int label);
 struct instr* newInstr(int op, int arg1, int arg2, int arg3);
@@ -73,11 +74,11 @@ void initCodeMem(void *tree);
 void printCode(void *tree);
 
 void printReg(int id);
-void printRegConstRegInstr(char* op, struct instr* instr1);
+void printRegConstRegInstr(const char* op, struct instr* instr1);
 void printStoreAI(struct instr* instr1);
-void printOneReg(char* op, struct instr* instr1);
-void printTwoReg(char* op, struct instr* instr1);
-void printThreeReg(char* op, struct instr* instr1, char arrow);
+void printOneReg(const char* op, struct instr* instr1);
+void printTwoReg(const char* op, struct instr* instr1);
+void printThreeReg(const char* op, struct instr* instr1, char arrow);
 
 void patch(std::list<int*> patchList, int label);
 std::list<int*> concatPatches(std::list<int*> patchList1, std::list<int*> patchList2);

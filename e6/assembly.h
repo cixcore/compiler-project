@@ -1,4 +1,4 @@
-#include "tac.h"
+#include <bits/stdc++.h>
 
 char* getGlobalVar(int offset);
 void loadaiToAssembly(struct instr* instr1);

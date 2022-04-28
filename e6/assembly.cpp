@@ -1,13 +1,25 @@
-#include <stdio.h>
+#include "parser.tab.h"
+#include "yylvallib.h"
+#include "tree.h"
+#include "types.h"
+#include "ilocgen.h"
 #include "assembly.h"
 
 int cmp;
 
-char* getGlobalVar(int offset) { //fazer
+char* getGlobalVar(int offset) {
+    symbols_table global = global_scope();
+    for(auto it = global.begin(); it != global.end(); it++) {
+        if(it->second->offset == offset && it->second->nature == VAR_N) {
+            return it->first;
+        }
+    }
+
+    return NULL;
 }
 
 char* getRegisterName(int id) {
-    switch(if) {
+    switch(id) {
         case RFP:  return "%rbp";
         case RSP:  return "%rsp";
         case RBSS: return "%rip";
@@ -15,7 +27,7 @@ char* getRegisterName(int id) {
 }
 
 void loadaiToAssembly(struct instr* instr1) {
-    if(instr1->notation == LOAD_RET ) {
+    if(instr1->notation == RET_LOAD ) {
         printf("subq\t$4, %%rsp\n");
         printf("movl\t%%eax, (%%rsp)\n");
     }
@@ -56,18 +68,18 @@ void cmpToAssembly(struct instr* instr1) {
 void cbrToAssembly(struct instr* instr1) {
     //cmp = instr1->op; //modificar
     switch(cmp) {
-        case CMP_LT: printf("jl\t.L%d\n", inst->arg2); break;
-        case CMP_LE: printf("jle\t.L%d\n", inst->arg2); break;
-        case CMP_EQ: printf("je\t.L%d\n", inst->arg2); break;
-        case CMP_NE: printf("jne\t.L%d\n", inst->arg2); break;
-        case CMP_GT: printf("jg\t.L%d\n", inst->arg2); break;
-        case CMP_GE: printf("jge\t.L%d\n", inst->arg2); break;
+        case CMP_LT: printf("jl\t.L%d\n", instr1->arg2); break;
+        case CMP_LE: printf("jle\t.L%d\n", instr1->arg2); break;
+        case CMP_EQ: printf("je\t.L%d\n", instr1->arg2); break;
+        case CMP_NE: printf("jne\t.L%d\n", instr1->arg2); break;
+        case CMP_GT: printf("jg\t.L%d\n", instr1->arg2); break;
+        case CMP_GE: printf("jge\t.L%d\n", instr1->arg2); break;
     }
 
     printf("jmp\t.L%d\n", instr1->arg3);
 }
-
-void cbrToAssembly(struct inst* inst){
+/*
+void cbrToAssembly(struct instr* inst){
     switch(comparacao){
         case CMP_LT: printf("jl\t.L%d\n", inst->arg2); break;
         case CMP_LE: printf("jle\t.L%d\n", inst->arg2); break;
@@ -80,8 +92,8 @@ void cbrToAssembly(struct inst* inst){
     //Se nao pulou para o label caso true, vai executar o codigo seguinte: jump para o caso falso
     printf("jmp\t.L%d\n", inst->arg3);
 }
-
-void binaryOpToAssembly(struct instr* instr1, char* op) {
+*/
+void binaryOpToAssembly(struct instr* instr1, const char* op) {
     printf("movl\t(%%rsp), %%eax\n");
     printf("addq\t$4, %%rsp\n");
 
@@ -112,9 +124,9 @@ struct instr* addiToAssembly(struct instr* instr1){
     if(instr1->notation == CALL){
         int label = instr1->next->next->arg1;
         printf("call\t%s\n", getFuncName(label)); // ver como fazer ja que é uma lista de labels
-        return inst->next->next;
+        return instr1->next->next;
     }
-    if(instr->notation == UPDATE_RSP){
+    if(instr1->notation == UPDATE_RSP){
         printf("subq\t$%d, %%rsp\n", instr1->arg2);
     }
     return instr1;
@@ -127,28 +139,28 @@ void rsubiToAssembly(struct instr* instr1) {// pq?:
 }
 
 void initFunc(struct instr* instr1) {
-    if(strcmp("main", getNomeFunc(instr1->label)) == 0) {
+    if(strcmp("main", getFuncName(instr1->label)) == 0) {
         printf(".globl	main\n");
     }
-    printf("%s:\n", getNomeFunc(instr1->label));
+    printf("%s:\n", getFuncName(instr1->label));
     printf("pushq\t%%rbp\n");
 
-    if(strcmp("main", getNomeFunc(instr1->label)) == 0) {
+    if(strcmp("main", getFuncName(instr1->label)) == 0) {
         printf("movq\t%%rsp, %%rbp\n");
     }
 }
 
 void labelToAssembly(struct instr* instr1) {
     if(instr1->notation == FUNC_LABEL){
-        initFunc(instr1)
+        initFunc(instr1);
     }
         printf(".L%d:\n", instr1->label);
 }
 
 struct instr* storeaiToAssembly(struct instr* instr1) {
-    if(isntr1->notation = FUNC_CALL) {
+    if(instr1->notation = FUN_CALL) {
         return instr1->next;
-    }else if(instr1->notation = FUNC_RET) {
+    }else if(instr1->notation = RET_FUNC) {
         printf("movl\t(%%rsp), %%eax\n");
         printf("addq\t$4, %%rsp\n");
 
@@ -161,10 +173,10 @@ struct instr* storeaiToAssembly(struct instr* instr1) {
     printf("movl\t(%%rsp), %%edx\n");
     printf("addq\t$4, %%rsp\n");
     if(instr1->arg2 == RBSS){
-        printf("movl\t%%edx, %s(%%rip)\n", getVarGlobal(instr1->arg3)); //fazer
+        printf("movl\t%%edx, %s(%%rip)\n", getGlobalVar(instr1->arg3)); //fazer
     }else{
         int offset = instr1->arg3;
-        if(instr1->agr2 == RFP) {
+        if(instr1->arg2 == RFP) {
             if(instr1->notation == MAIN_VAR) {
                 offset -=4;
             } else {
@@ -193,6 +205,15 @@ void mainEnd(){
     printf("ret\n");
 }
 
+void printVarsGlobais(){
+    symbols_table global = global_scope();
+    for(auto it = global.begin(); it != global.end(); it++) {
+        if(it->second->nature == VAR_N) {
+            printf(".comm %s,4\n", it->first);
+        }
+    }
+}
+
 void printAssembly(void* tree){
     printVarsGlobais();
 
@@ -208,7 +229,7 @@ void printAssembly(void* tree){
             case LOADI:   loadiToAssembly(code); break;
             case ADD:     binaryOpToAssembly(code, "add"); break;
             case SUB:     binaryOpToAssembly(code, "sub"); break;
-            case DIV:     divToAssembly(code); break;
+            case DIV:     divToAssembly(/*code*/); break;
             case MULT:    binaryOpToAssembly(code, "imul"); break;
             case RSUBI:   rsubiToAssembly(code); break;
             case CMP_LT:  cmpToAssembly(code); break;

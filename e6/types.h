@@ -98,3 +98,5 @@ void print_type_str(int type);
 void print_nature_str(int nature);
 
 int getOffset(char* id, int* scope);
+
+symbols_table global_scope();

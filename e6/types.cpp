@@ -712,3 +712,7 @@ int getOffset(char* id, int* scope) {
     }
     return -1;
 }
+
+symbols_table global_scope() {
+    return scopes.back();
+}
