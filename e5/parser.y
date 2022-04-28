@@ -147,9 +147,9 @@ literal:
 
 
 attr: 
-    TK_IDENTIFICADOR '=' expr                   { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), lexToNode($1), $3); validate_attr_expr($1, VAR_N, $3); }
+    TK_IDENTIFICADOR '=' expr                   { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), lexToNode($1), $3); validate_attr_expr($1, VAR_N, $3); storeVar($$, $1, $3);}
     | TK_IDENTIFICADOR'[' expr ']' '=' expr     { $$ = createParentNode2Children(lexToNode(lexValueFromSC('=')), createParentNode2Children(lexToNode(lexValueFromOC("[]")), lexToNode($1), $3), $6); 
-                                                    validate_attr_expr($1, VEC_N, $6); };
+                                                    validate_attr_expr($1, VEC_N, $6); storeVar($$, $1, $6);};
 
 input:  TK_PR_INPUT TK_IDENTIFICADOR     { $$ = createParentNode1Child(lexToNode($1), createLeaf($2)); validate_input_id($2); };
 output: 
