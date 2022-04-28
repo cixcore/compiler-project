@@ -1,0 +1,11 @@
+int v;
+
+int func() {
+	return 1;
+}
+
+int main (){
+	int a <= 1, b, c, d <= 456;
+
+	b = func();
+}
