@@ -491,7 +491,8 @@ void initCodeMem(void *tree) {
     struct instr* init_rsp = newInstr(LOADI, 1024, RSP, NU);
     struct instr* init_rbss = newInstr(LOADI, 1000, RBSS, NU);
 
-    int label = getFuncLabel("main");
+    char main_n[5] = "main";
+    int label = getFuncLabel(main_n);
     struct instr* jump = newInstr(JUMPI, label, NU, NU);
 
     init_rfp->next = init_rsp;
