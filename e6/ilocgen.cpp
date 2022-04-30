@@ -26,10 +26,14 @@ void generate_iloc(void *root){
 void funcDecCode(struct node* node1, struct lex_value_t* func) {
     int label = getFuncLabel(func->token.str);
     struct instr* code_label = codeLabel(label);
+    code_label->notation = FUNC_LABEL;
 
     extern list<int> scope_deslocs;
 
     struct instr* updated_rsp = newInstr(ADDI, RSP, scope_deslocs.front(),RSP);
+    updated_rsp->notation = UPDATE_RSP;
+
+    mainFunct ? updated_rsp->arg2 -= 16 : updated_rsp->arg2 -= 0;
 
     code_label->next = updated_rsp;
     if(node1->children[0] != NULL) {
@@ -119,15 +123,28 @@ void initCode(struct node* var_list) {
 }
 
 void loadVar(struct node* no, char* id){
+    bool mainVar = false;
     int scope;
     int offset = getOffset(id, &scope);
 
-    int base = scope == GLOBAL ? RBSS : RFP;
+    int base;
+
+    if(scope == GLOBAL){
+        base = RBSS;
+    } else{
+        base = RFP;
+        if(mainFunct) {
+            mainVar = true;
+        }
+    }
 
     int reg = newRegister();
     no->code = newInstr(LOADAI, base, offset, reg);
     no->codeEnd = no->code;
     no->temp = reg;
+    if(mainVar){
+        no->code->notation = MAIN_VAR;
+    }
 }
 
 void loadLit(struct node* no){
@@ -141,13 +158,24 @@ void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp) {
     int scope;
     int offset = getOffset(var->token.str, &scope);
 
-    int base = scope == GLOBAL ? RBSS : RFP;
+    int base;
 
+    if(scope == GLOBAL){
+        base = RBSS;
+    } else{
+        base = RFP;
+        if(mainFunct) {
+            mainFunct = true;
+        }
+    }
     
     struct instr* store = newInstr(STOREAI, exp->temp, base, offset);
     exp->codeEnd->next = store;
     parent->code = exp->code;
     parent->codeEnd = store;
+    if(mainFunct){
+        store->notation = MAIN_VAR;
+    }
 }
 
 void ifCode(struct node* parent) {
@@ -255,7 +283,9 @@ void funcCallCode(struct node* node1){
     struct instr* store_rfp = newInstr(STOREAI, RFP, RSP, 8);     // Salva o RFP
     store_rsp->next = store_rfp;
 
-    int offset = 16; 
+    store_rsp->notation = FUN_CALL;
+
+    int offset = 20; 
     struct node* param = node1->children[0];
     struct instr* end = store_rfp;
 
@@ -273,6 +303,9 @@ void funcCallCode(struct node* node1){
     int return_addr = newRegister();
     struct instr* l_return_addr = newInstr(ADDI, RPC, 3, return_addr);
     struct instr* s_return_addr = newInstr(STOREAI, return_addr, RSP, 0); 
+
+    l_return_addr->notation = CALL;
+
     end->next = l_return_addr;
     l_return_addr->next = s_return_addr;
 
@@ -283,6 +316,8 @@ void funcCallCode(struct node* node1){
     int return_value = newRegister();
     struct instr* l_ret = newInstr(LOADAI, RSP, 12, return_value);
     jump->next = l_ret;
+
+    l_ret->notation = RET_LOAD;
 
     node1->code = store_rsp;
     node1->codeEnd = l_ret;
@@ -305,6 +340,8 @@ void returnCode(struct node* node1)
         struct instr* rsp_update = newInstr(LOADAI, RFP, 4, RSP);
         struct instr* rfp_update = newInstr(LOADAI, RFP, 8, RFP);
         struct instr* jump = newInstr(JUMP, temp, NU, NU); // Salta para o endere�o de retorno
+
+        store_ret->notation = RET_FUNC;
 
         node1->children[0]->codeEnd->next = store_ret;
         store_ret->next = l_end_ret;
