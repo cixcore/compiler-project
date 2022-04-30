@@ -127,22 +127,13 @@ void loadVar(struct node* no, char* id){
     int scope;
     int offset = getOffset(id, &scope);
 
-    int base;
-
-    if(scope == GLOBAL){
-        base = RBSS;
-    } else{
-        base = RFP;
-        if(mainFunct) {
-            mainVar = true;
-        }
-    }
+    int base = scope == GLOBAL ? RBSS : RFP;
 
     int reg = newRegister();
     no->code = newInstr(LOADAI, base, offset, reg);
     no->codeEnd = no->code;
     no->temp = reg;
-    if(mainVar){
+    if(scope != GLOBAL && mainFunct){
         no->code->notation = MAIN_VAR;
     }
 }
@@ -158,22 +149,13 @@ void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp) {
     int scope;
     int offset = getOffset(var->token.str, &scope);
 
-    int base;
-
-    if(scope == GLOBAL){
-        base = RBSS;
-    } else{
-        base = RFP;
-        if(mainFunct) {
-            mainFunct = true;
-        }
-    }
+    int base = scope == GLOBAL ? RBSS : RFP;
     
     struct instr* store = newInstr(STOREAI, exp->temp, base, offset);
     exp->codeEnd->next = store;
     parent->code = exp->code;
     parent->codeEnd = store;
-    if(mainFunct){
+    if(scope != GLOBAL && mainFunct){
         store->notation = MAIN_VAR;
     }
 }
