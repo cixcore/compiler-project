@@ -55,7 +55,7 @@ void loadiToAssembly(struct instr* instr1) {
 }
 
 void cmpToAssembly(struct instr* instr1) {
-    cmp = instr1->op; //modificar
+    cmp = instr1->op;
     printf("movl\t(%%rsp), %%ebx\n");
     printf("addq\t$4, %%rsp\n");
 
@@ -91,7 +91,7 @@ void binaryOpToAssembly(struct instr* instr1, const char* op) {
     printf("movl\t%%ebx, (%%rsp)\n");
 }
 
-void divToAssembly(){//struct instr* instr1){ // pq recebe algo?
+void divToAssembly(){
     printf("movl\t(%%rsp), %%ebx\n"); 
     printf("addq\t$4, %%rsp\n");
 
@@ -105,10 +105,10 @@ void divToAssembly(){//struct instr* instr1){ // pq recebe algo?
     printf("movl\t%%eax, (%%rsp)\n");
 }
 
-struct instr* addiToAssembly(struct instr* instr1){
+struct instr* addiToAssembly(){
     if(instr1->notation == CALL){
         int label = instr1->next->next->arg1;
-        printf("call\t%s\n", getFuncName(label)); // ver como fazer ja que é uma lista de labels
+        printf("call\t%s\n", getFuncName(label)); 
         return instr1->next->next;
     }
     if(instr1->notation == UPDATE_RSP){
@@ -117,7 +117,7 @@ struct instr* addiToAssembly(struct instr* instr1){
     return instr1;
 }
 
-void rsubiToAssembly(struct instr* instr1) {// pq?:
+void rsubiToAssembly(struct instr* instr1) {
     printf("movl\t(%%rsp), %%eax\n");
     printf("negl\t%%eax\n");
     printf("movl\t%%eax, (%%rsp)\n");
@@ -143,9 +143,9 @@ void labelToAssembly(struct instr* instr1) {
 }
 
 struct instr* storeaiToAssembly(struct instr* instr1) {
-    if(instr1->notation = FUN_CALL) {
+    if(instr1->notation == FUN_CALL) {
         return instr1->next;
-    }else if(instr1->notation = RET_FUNC) {
+    }else if(instr1->notation == RET_FUNC) {
         printf("movl\t(%%rsp), %%eax\n");
         printf("addq\t$4, %%rsp\n");
 
@@ -158,7 +158,7 @@ struct instr* storeaiToAssembly(struct instr* instr1) {
     printf("movl\t(%%rsp), %%edx\n");
     printf("addq\t$4, %%rsp\n");
     if(instr1->arg2 == RBSS){
-        printf("movl\t%%edx, %s(%%rip)\n", getGlobalVar(instr1->arg3)); //fazer
+        printf("movl\t%%edx, %s(%%rip)\n", getGlobalVar(instr1->arg3));
     }else{
         int offset = instr1->arg3;
         if(instr1->arg2 == RFP) {
@@ -213,7 +213,7 @@ void printAssembly(void* tree){
             case LOADI:   loadiToAssembly(code); break;
             case ADD:     binaryOpToAssembly(code, "add"); break;
             case SUB:     binaryOpToAssembly(code, "sub"); break;
-            case DIV:     divToAssembly(/*code*/); break;
+            case DIV:     divToAssembly(); break;
             case MULT:    binaryOpToAssembly(code, "imul"); break;
             case RSUBI:   rsubiToAssembly(code); break;
             case CMP_LT:  cmpToAssembly(code); break;
@@ -227,7 +227,7 @@ void printAssembly(void* tree){
             case HALT:    mainEnd(); break;
             case STOREAI: code = storeaiToAssembly(code); break;
             case JUMPI:   jumpiToAssembly(code); break;
-            case ADDI:    code = addiToAssembly(code); break;
+            case ADDI:    code = addiToAssembly(); break;
             case I2I:     i2iToAssembly(code); break;
         }
         code = code->next;
