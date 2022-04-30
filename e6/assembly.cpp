@@ -66,7 +66,6 @@ void cmpToAssembly(struct instr* instr1) {
 }
 
 void cbrToAssembly(struct instr* instr1) {
-    //cmp = instr1->op; //modificar
     switch(cmp) {
         case CMP_LT: printf("jl\t.L%d\n", instr1->arg2); break;
         case CMP_LE: printf("jle\t.L%d\n", instr1->arg2); break;
@@ -78,21 +77,7 @@ void cbrToAssembly(struct instr* instr1) {
 
     printf("jmp\t.L%d\n", instr1->arg3);
 }
-/*
-void cbrToAssembly(struct instr* inst){
-    switch(comparacao){
-        case CMP_LT: printf("jl\t.L%d\n", inst->arg2); break;
-        case CMP_LE: printf("jle\t.L%d\n", inst->arg2); break;
-        case CMP_EQ: printf("je\t.L%d\n", inst->arg2); break;
-        case CMP_NE: printf("jne\t.L%d\n", inst->arg2); break;
-        case CMP_GT: printf("jg\t.L%d\n", inst->arg2); break;
-        case CMP_GE: printf("jge\t.L%d\n", inst->arg2); break;
-    }
 
-    //Se nao pulou para o label caso true, vai executar o codigo seguinte: jump para o caso falso
-    printf("jmp\t.L%d\n", inst->arg3);
-}
-*/
 void binaryOpToAssembly(struct instr* instr1, const char* op) {
     printf("movl\t(%%rsp), %%eax\n");
     printf("addq\t$4, %%rsp\n");
@@ -220,7 +205,6 @@ void printAssembly(void* tree){
     struct node *root = (struct node*)tree;
     struct instr* code = root->code;
 
-    //pula init dos sp.regs e jump pra main
     code = code->next->next->next->next;
 
     while(code != NULL){

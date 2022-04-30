@@ -1,0 +1,48 @@
+.comm a,4
+inc:
+pushq	%rbp
+.L0:
+movq	%rsp, %rbp
+subq	$4, %rsp
+subq	$4, %rsp
+movl	-4(%rbp), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	$1, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+movl	(%rsp), %ebx
+addq	$4, %rsp
+addl	%eax, %ebx
+subq	$4, %rsp
+movl	%ebx, (%rsp)
+subq	$4, %rsp
+movl	--8(%rbp), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	--4(%rbp), %edx
+movl	%edx, (%rsp)
+add:
+pushq	%rbp
+.L1:
+movq	%rsp, %rbp
+subq	$4, %rsp
+subq	$4, %rsp
+movl	-4(%rbp), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	-8(%rbp), %edx
+movl	%edx, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+movl	(%rsp), %ebx
+addq	$4, %rsp
+addl	%eax, %ebx
+subq	$4, %rsp
+movl	%ebx, (%rsp)
+subq	$4, %rsp
+movl	--8(%rbp), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	--4(%rbp), %edx
+movl	%edx, (%rsp)
