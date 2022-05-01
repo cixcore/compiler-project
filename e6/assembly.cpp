@@ -199,7 +199,7 @@ void printVarsGlobais(){
     }
 }
 
-void printAssembly(void* tree){
+void generateAsm(void* tree){
     printVarsGlobais();
 
     struct node *root = (struct node*)tree;

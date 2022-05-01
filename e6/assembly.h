@@ -17,4 +17,4 @@ void jumpiToAssembly(struct instr* instr1);
 void i2iToAssembly(struct instr* instr1);
 void mainEnd();
 void printVarsGlobais();
-void printAssembly(void* tree);
+void generateAsm(void* tree);
