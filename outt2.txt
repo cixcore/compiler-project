@@ -1,0 +1,187 @@
+.comm w,4
+.comm a,4
+fib:
+pushq	%rbp
+.L0:
+movq	%rsp, %rbp
+subq	$12, %rsp
+subq	$4, %rsp
+movl	a(%rip), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	$0, (%rsp)
+movl	(%rsp), %ebx
+addq	$4, %rsp
+movl	(%rsp), %eax
+addq	$4, %rsp
+cmpl	%ebx, %eax
+je	.L1
+jmp	.L2
+.L1:
+subq	$4, %rsp
+movl	$0, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+leave
+ret
+.L2:
+subq	$4, %rsp
+movl	a(%rip), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	$1, (%rsp)
+movl	(%rsp), %ebx
+addq	$4, %rsp
+movl	(%rsp), %eax
+addq	$4, %rsp
+cmpl	%ebx, %eax
+je	.L3
+jmp	.L4
+.L3:
+subq	$4, %rsp
+movl	$1, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+leave
+ret
+.L4:
+subq	$4, %rsp
+movl	a(%rip), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	$1, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+movl	(%rsp), %ebx
+addq	$4, %rsp
+subl	%eax, %ebx
+subq	$4, %rsp
+movl	%ebx, (%rsp)
+movl	(%rsp), %edx
+addq	$4, %rsp
+movl	%edx, -20(%rsp)
+call	fib
+subq	$4, %rsp
+movl	%eax, (%rsp)
+movl	(%rsp), %edx
+addq	$4, %rsp
+movl	%edx, -8(%rbp)
+subq	$4, %rsp
+movl	a(%rip), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	$2, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+movl	(%rsp), %ebx
+addq	$4, %rsp
+subl	%eax, %ebx
+subq	$4, %rsp
+movl	%ebx, (%rsp)
+movl	(%rsp), %edx
+addq	$4, %rsp
+movl	%edx, -20(%rsp)
+call	fib
+subq	$4, %rsp
+movl	%eax, (%rsp)
+movl	(%rsp), %edx
+addq	$4, %rsp
+movl	%edx, -12(%rbp)
+subq	$4, %rsp
+movl	-8(%rbp), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	-12(%rbp), %edx
+movl	%edx, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+movl	(%rsp), %ebx
+addq	$4, %rsp
+addl	%eax, %ebx
+subq	$4, %rsp
+movl	%ebx, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+leave
+ret
+.globl	main
+main:
+pushq	%rbp
+movq	%rsp, %rbp
+.L5:
+subq	$4, %rsp
+subq	$4, %rsp
+movl	-16(%rbp), %edx
+movl	%edx, (%rsp)
+movl	(%rsp), %edx
+addq	$4, %rsp
+movl	%edx, -20(%rsp)
+call	fib
+subq	$4, %rsp
+movl	%eax, (%rsp)
+movl	(%rsp), %edx
+addq	$4, %rsp
+movl	%edx, -12(%rbp)
+.L6:
+subq	$4, %rsp
+movl	w(%rip), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	$0, (%rsp)
+movl	(%rsp), %ebx
+addq	$4, %rsp
+movl	(%rsp), %eax
+addq	$4, %rsp
+cmpl	%ebx, %eax
+jg	.L7
+jmp	.L8
+.L7:
+subq	$4, %rsp
+movl	w(%rip), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	$1, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+movl	(%rsp), %ebx
+addq	$4, %rsp
+subl	%eax, %ebx
+subq	$4, %rsp
+movl	%ebx, (%rsp)
+movl	(%rsp), %edx
+addq	$4, %rsp
+movl	%edx, w(%rip)
+subq	$4, %rsp
+movl	--4(%rbp), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	$1, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+movl	(%rsp), %ebx
+addq	$4, %rsp
+addl	%eax, %ebx
+subq	$4, %rsp
+movl	%ebx, (%rsp)
+movl	(%rsp), %edx
+addq	$4, %rsp
+movl	%edx, --4(%rbp)
+jmp	.L6
+.L8:
+subq	$4, %rsp
+movl	-12(%rbp), %edx
+movl	%edx, (%rsp)
+subq	$4, %rsp
+movl	-16(%rbp), %edx
+movl	%edx, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+movl	(%rsp), %ebx
+addq	$4, %rsp
+addl	%eax, %ebx
+subq	$4, %rsp
+movl	%ebx, (%rsp)
+movl	(%rsp), %eax
+addq	$4, %rsp
+leave
+ret
