@@ -105,7 +105,7 @@ void divToAssembly(){
     printf("movl\t%%eax, (%%rsp)\n");
 }
 
-struct instr* addiToAssembly(){
+struct instr* addiToAssembly(struct instr* instr1){
     if(instr1->notation == CALL){
         int label = instr1->next->next->arg1;
         printf("call\t%s\n", getFuncName(label)); 
@@ -145,7 +145,7 @@ void labelToAssembly(struct instr* instr1) {
 struct instr* storeaiToAssembly(struct instr* instr1) {
     if(instr1->notation == FUN_CALL) {
         return instr1->next;
-    }else if(instr1->notation == RET_FUNC) {
+    } else if(instr1->notation == RET_FUNC) {
         printf("movl\t(%%rsp), %%eax\n");
         printf("addq\t$4, %%rsp\n");
 
@@ -208,6 +208,7 @@ void printAssembly(void* tree){
     code = code->next->next->next->next;
 
     while(code != NULL){
+        //std::cout << code->op << '\n';
         switch(code->op){
             case LOADAI:  loadaiToAssembly(code); break;
             case LOADI:   loadiToAssembly(code); break;
@@ -227,7 +228,7 @@ void printAssembly(void* tree){
             case HALT:    mainEnd(); break;
             case STOREAI: code = storeaiToAssembly(code); break;
             case JUMPI:   jumpiToAssembly(code); break;
-            case ADDI:    code = addiToAssembly(); break;
+            case ADDI:    code = addiToAssembly(code); break;
             case I2I:     i2iToAssembly(code); break;
         }
         code = code->next;

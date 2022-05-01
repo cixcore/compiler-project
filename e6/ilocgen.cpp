@@ -126,9 +126,7 @@ void loadVar(struct node* no, char* id){
     bool mainVar = false;
     int scope;
     int offset = getOffset(id, &scope);
-
-    int base;
-
+    
     int base = scope == GLOBAL ? RBSS : RFP;
     
     /*if(scope == GLOBAL){
@@ -144,7 +142,7 @@ void loadVar(struct node* no, char* id){
     no->code = newInstr(LOADAI, base, offset, reg);
     no->codeEnd = no->code;
     no->temp = reg;
-    if(mainVar){
+    if(scope != GLOBAL && mainFunct){
         //no->code->notation = MAIN_VAR;
     }
 }
@@ -159,8 +157,6 @@ void loadLit(struct node* no){
 void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp) {
     int scope;
     int offset = getOffset(var->token.str, &scope);
-
-    int base;
 
     int base = scope == GLOBAL ? RBSS : RFP;
     
@@ -177,7 +173,7 @@ void storeVar(struct node* parent, struct lex_value_t* var, struct node* exp) {
     exp->codeEnd->next = store;
     parent->code = exp->code;
     parent->codeEnd = store;
-    if(mainFunct){
+    if(scope != GLOBAL && mainFunct){
         //store->notation = MAIN_VAR;
     }
 }
@@ -496,7 +492,8 @@ void initCodeMem(void *tree) {
     struct instr* init_rsp = newInstr(LOADI, 1024, RSP, NU);
     struct instr* init_rbss = newInstr(LOADI, 1000, RBSS, NU);
 
-    int label = getFuncLabel("main");
+    char main_n[5] = "main";
+    int label = getFuncLabel(main_n);
     struct instr* jump = newInstr(JUMPI, label, NU, NU);
 
     init_rfp->next = init_rsp;

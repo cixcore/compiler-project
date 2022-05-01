@@ -247,19 +247,15 @@ struct lex_value_t *lexValueFromOC(const char *schar)
 }
 
 void codeConcat(struct node* root) {
-    if(root != NULL && root->next != NULL) {
-        if(root->code != NULL) {
-            root->codeEnd->next = root->next->code;
-            root->codeEnd = root->next->codeEnd;
-        }
+    if(root != NULL && root->next != NULL && root->codeEnd != NULL) {
+        root->codeEnd->next = root->next->code;
+        root->codeEnd = root->next->codeEnd;
     }
 }
 
 void codeConcatCommands(struct node* node1, struct node* node1next) {
-        if(node1 != NULL && node1next != NULL) {
-        if(node1->code != NULL) {
-            node1->codeEnd->next = node1next->code;
-            node1->codeEnd = node1next->codeEnd;
-        }
+    if(node1 != NULL && node1next != NULL && node1->codeEnd != NULL) {
+        node1->codeEnd->next = node1next->code;
+        node1->codeEnd = node1next->codeEnd;
     }
 }
